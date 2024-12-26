@@ -5,7 +5,6 @@ from utils import get_api_key
 
 def test_single_question(api_key, question):
     """Test a single MMLU question using Claude."""
-    # Initialize API client with the new syntax
     client = anthropic.Anthropic(api_key=api_key)
     
     prompt = f"""Question: {question['question']}
@@ -20,7 +19,7 @@ Please respond with just a single letter (A, B, C, or D) representing your answe
 
     response = client.messages.create(
         model="claude-3-5-sonnet-20241022",
-        max_tokens=1024,
+        max_tokens=5,
         temperature=0,
         messages=[{"role": "user", "content": prompt}]
     )
