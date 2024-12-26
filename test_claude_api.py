@@ -1,37 +1,26 @@
 import anthropic
 from generate_dataframes import MMLUData
-from utils import get_api_key
+from utils import get_api_key, MMLUPromptDefault
 
 
-def test_single_question(api_key, question):
+def test_single_question(api_key, prompt):
     """Test a single MMLU question using Claude."""
     client = anthropic.Anthropic(api_key=api_key)
-    
-    prompt = f"""Question: {question['question']}
-
-Options:
-A) {question['choices'][0]}
-B) {question['choices'][1]}
-C) {question['choices'][2]}
-D) {question['choices'][3]}
-
-Please respond with just a single letter (A, B, C, or D) representing your answer."""
-
+    input_prompt = MMLUPromptDefault(question=prompt['question'], choices=prompt['choices']).format()
     response = client.messages.create(
         model="claude-3-5-sonnet-20241022",
         max_tokens=5,
         temperature=0,
-        messages=[{"role": "user", "content": prompt}]
+        messages=[{"role": "user", "content": input_prompt}]
     )
-    
+    letters = ('A', 'B', 'C', 'D')
     # Extract predicted answer from content list
-    predicted = response.content[0].text.strip()[0]
-    correct = chr(65 + int(question['answer']))  # Convert 0-3 to A-D
-    
-    print(f"\nQuestion: {question['question']}")
+    predicted = response.content[0].text[0]
+    correct = chr(ord(predicted))
+    print(f"\nQuestion: {prompt['question']}")
     print("\nChoices:")
-    for i, choice in enumerate(question['choices']):
-        print(f"{chr(65+i)}) {choice}")
+    for i, choice in enumerate(prompt['choices']):
+        print(f"{letters[i]}) {choice}")
     print(f"\nClaude's answer: {predicted}")
     print(f"Correct answer: {correct}")
     print(f"Correct? {predicted == correct}")
