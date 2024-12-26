@@ -1,7 +1,6 @@
-import os
-import subprocess
 import anthropic
 from generate_dataframes import MMLUData
+from utils import get_api_key
 
 
 def test_single_question(api_key, question):
@@ -47,12 +46,9 @@ Please respond with just a single letter (A, B, C, or D) representing your answe
 
 
 if __name__ == "__main__":
-    # Get API key
-    cmd = ['security', 'find-generic-password', '-a', 'galvin.s.k@gmail.com', '-s', 'claude-api-key', '-w']
-    api_key = subprocess.check_output(cmd).decode('utf-8').strip()
+    api_key = get_api_key()
     # Load data and get a sample
     mmlu = MMLUData("MMLU")
     data = mmlu.gather_and_format()
     question = mmlu.sample_question()
-    # Test the question
     result = test_single_question(api_key, question)
