@@ -147,8 +147,7 @@ class MMLUExperimenter:
     def _parse_response(self, response: str) -> Optional[int]:
        """Parse Claude's response to extract the predicted answer index."""
        try:
-           if isinstance(response, list) and len(response) == 1:
-               response = response[0].text
+           response = response[0].text[0]
            # Look for a single letter (A-D) in the response
            matches = re.findall(r'\b[A-Da-d]\b', response)
            if len(matches) == 1:
