@@ -42,8 +42,8 @@ class MMLUExperimenter:
         self.df = self._load_and_validate_data()
         
         # Set up experiment
-        self.results_path = os.path.join(self.experiment_path,  "results.parquet")
-        self.config_path = os.path.join(self.experiment_path, "config.json")
+        self.results_path = Path(os.path.join(self.experiment_path,  "results.parquet"))
+        self.config_path = Path(os.path.join(self.experiment_path, "config.json"))
         
         # Add prompt style for posing questions
         self.prompt_style = prompt_style
@@ -103,7 +103,7 @@ class MMLUExperimenter:
             raise RuntimeError(f"Failed to load experiment config: {e}")
         
         # Validate data consistency
-        current_hash = pd.util.hash_pandas_object(self.df).sum()
+        current_hash = hashlib.md5(self.df.to_string().encode()).hexdigest()
         if current_hash != self.config['data_hash']:
             raise ValueError("Dataframe has changed since experiment creation")
         
@@ -113,6 +113,7 @@ class MMLUExperimenter:
             saved_df = pd.read_parquet(self.results_path)
             # Update only rows that have predictions
             mask = saved_df['predicted'].notna()
+            self.exp_df = self.df.copy(deep=True)
             self.exp_df['predicted'] = saved_df['predicted']
             total_predictions += mask.sum()
         
