@@ -145,18 +145,17 @@ class MMLUExperimenter:
         return self.prompt_style(question=question, choices=choices).format()
 
     def _parse_response(self, response: str) -> Optional[int]:
-       """Parse Claude's response to extract the predicted answer index."""
-       try:
-           response = response[0].text[0]
-           # Look for a single letter (A-D) in the response
-           matches = re.findall(r'\b[A-Da-d]\b', response)
-           if len(matches) == 1:
-               # Convert letter to number (A=0, B=1, C=2, D=3)
-               letter = matches[0].upper()
-               return ord(letter) - ord('A')
-           return None
-       except Exception:
-           return None    
+        """Parse Claude's response to extract the predicted answer index."""
+        try:
+            output = response[0].text
+            if len(output) == 1 and output in ('A', 'B', 'C', 'D'):
+                # Convert letter to number (A=0, B=1, C=2, D=3)
+                letter = output[0].upper()
+                return ord(letter) - ord('A')
+            else:
+                return -1
+        except Exception:
+            return None    
 
     def run_experiment(
         self,
@@ -167,7 +166,7 @@ class MMLUExperimenter:
         """
         Run the experiment on specified number of questions.
         
-        Args:
+        Args)
             max_questions: Maximum number of questions to process
             retry_errors: Whether to retry failed API calls
             retry_delay: Seconds to wait between retries
@@ -235,7 +234,8 @@ class MMLUExperimenter:
             'created_at': config['created_at'],
             'last_updated': config['last_updated'],
             'questions': len(self.exp_df),
-            'completed': self.exp_df['predicted'].notna().sum(),
+            'completed_questions': self.exp_df['predicted'].notna().sum(),
+            'total_questions': len(self.exp_df),
             'accuracy': self.get_accuracy(),
         }
         return results
