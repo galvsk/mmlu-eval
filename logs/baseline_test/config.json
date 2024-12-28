@@ -1,0 +1,9 @@
+{
+  "description": "Running baseline test eval",
+  "model": "claude-3-sonnet-20240229",
+  "save_frequency": 10,
+  "df_path": "ref_dataframes/mmlu_test.parquet",
+  "data_hash": "0242d87435715af1ae9ef2567f9e0711",
+  "created_at": "2024-12-26 13:11:32",
+  "last_updated": "2024-12-26 18:26:05"
+}

@@ -129,7 +129,7 @@ class MMLUExperimenter:
         total = len(self.exp_df)
         completed = self.exp_df['predicted'].notna().sum()
         
-        print(f"\nProgress: {completed} / {total} questions ({(completed / total * 100) :.1f}%)\n")
+        print(f"\nProgress: {completed} / {total} questions ({(completed / total * 100) :.2f}%)\n")
         
         # Update config
         with open(self.config_path, 'r') as f:
