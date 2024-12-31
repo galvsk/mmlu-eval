@@ -224,10 +224,11 @@ class MMLUExperimenter:
                     print(f"Retrying in {retry_delay} seconds...")
                     time.sleep(retry_delay)
             
-            # Save checkpoint periodically
+            # Save checkpoint periodically (and print accuracy)
             if (idx + 1) % self.save_frequency == 0:
                 self._save_results()
-                print(f"Saved checkpoint after {idx + 1} questions")
+                acc = self.get_accuracy()
+                print(f"Saved checkpoint after {idx + 1} questions, accuracy : {acc :.2f}%")
                 
         # Final save
         self._save_results()
