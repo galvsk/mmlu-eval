@@ -141,7 +141,7 @@ class MMLUExperimenter:
         with open(self.config_path, 'w') as f:
             json.dump(config, f, indent=2)
 
-    def _format_prompt(self, question: str, choices: List[str], answer: int) -> Tuple[str, int, Dict[int, int]]:
+    def _format_prompt(self, question: str, choices: List[str], answer: int) -> tuple[str, int, Dict[int, int]]:
         """Format the question and choices into a prompt for Claude.
         Returns:
             tuple: (formatted_prompt, answer_index, position_mapping)
@@ -228,10 +228,12 @@ class MMLUExperimenter:
             if (idx + 1) % self.save_frequency == 0:
                 self._save_results()
                 acc = self.get_accuracy()
-                print(f"Saved checkpoint after {idx + 1} questions, accuracy : {acc :.2f}%")
+                print(f"Saved checkpoint after {idx + 1} questions, accuracy: {acc * 100:.2f}%")
                 
         # Final save
         self._save_results()
+        acc = self.get_accuracy()
+        print(f"\nFinal accuracy: {acc * 100:.2f}%")
     
     def get_accuracy(self) -> float:
         """Calculate accuracy for currently answered questions"""

@@ -2,6 +2,8 @@
 import argparse
 from textwrap import dedent
 from mmlu_experimenter import MMLUExperimenter
+from mmlu_formatter import MMLUPromptDefault, MMLUPromptPermuted
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -13,7 +15,8 @@ def parse_args():
                 --exp-path experiments/baseline \\
                 --df-path ref_dataframes/mmlu_test.parquet \\
                 --desc "Baseline test run" \\
-                --max-questions 100
+                --max-questions 100 \\
+                --prompt-style permuted \\
         ''')
     )
     
@@ -52,10 +55,21 @@ def parse_args():
         help='How often to save results (in number of questions)'
     )
     
+    parser.add_argument(
+        '--prompt-style',
+        type=str,
+        choices=['default', 'permuted'],
+        default='default',
+        help='Style of prompt formatting to use'
+    )
+    
     return parser.parse_args()
 
 def main():
     args = parse_args()
+    
+    # Select prompt style
+    prompt_style = MMLUPromptPermuted if args.prompt_style == 'permuted' else MMLUPromptDefault
     
     # Initialize experimenter
     experimenter = MMLUExperimenter(
@@ -63,11 +77,12 @@ def main():
         df_path=args.df_path,
         description=args.desc,
         save_frequency=args.save_frequency,
+        prompt_style=prompt_style
     )
     
     # Run experiment
     experimenter.run_experiment(
-        max_questions=args.max_questions
+        max_questions=args.max_questions,
     )
     
     # Print results
@@ -75,6 +90,7 @@ def main():
     print("\nExperiment Results:")
     print(f"Description: {results['description']}")
     print(f"Model: {results['model']}")
+    print(f"Prompt Style: {args.prompt_style}")
     print(f"Questions Completed: {results['completed_questions']}/{results['total_questions']}")
     print(f"Accuracy: {results['accuracy']:.2%}")
     print(f"Last Updated: {results['last_updated']}")
