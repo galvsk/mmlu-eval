@@ -139,23 +139,35 @@ class MMLUExperimenter:
         
         with open(self.config_path, 'w') as f:
             json.dump(config, f, indent=2)
-    
-    def _format_prompt(self, question: str, choices: List[str]) -> str:
-        """Format the question and choices into a prompt for Claude."""
-        return self.prompt_style(question=question, choices=choices).format()
 
-    def _parse_response(self, response: str) -> Optional[int]:
-        """Parse Claude's response to extract the predicted answer index."""
+    def _format_prompt(self, question: str, choices: List[str], answer: int) -> Tuple[str, int, Dict[int, int]]:
+        """Format the question and choices into a prompt for Claude.
+        Returns:
+            tuple: (formatted_prompt, answer_index, position_mapping)
+        """
+        formatter = self.prompt_style(
+            question=question,
+            choices=choices,
+            answer=answer
+        )
+        return formatter.format_question()
+    
+    def _parse_response(self, response: str, position_mapping: Dict[int, int]) -> Optional[int]:
+        """Parse Claude's response to extract the predicted answer index.
+        Maps the response back to the original answer position.
+        """
         try:
             output = response[0].text
             if len(output) == 1 and output in ('A', 'B', 'C', 'D'):
                 # Convert letter to number (A=0, B=1, C=2, D=3)
                 letter = output[0].upper()
-                return ord(letter) - ord('A')
+                response_idx = ord(letter) - ord('A')
+                # Map back to original position
+                return position_mapping[response_idx]
             else:
                 return -1
         except Exception:
-            return None    
+            return None
 
     def run_experiment(
         self,
@@ -180,8 +192,11 @@ class MMLUExperimenter:
         
         for idx, row_idx in enumerate(unanswered):
             row = self.exp_df.loc[row_idx]
-            prompt = self._format_prompt(row['question'], row['choices'])
-            
+            prompt, _, position_mapping = self._format_prompt(
+                row['question'], 
+                row['choices'], 
+                row['answer']
+            ) 
             success = False
             while not success:
                 try:
@@ -192,7 +207,7 @@ class MMLUExperimenter:
                         messages=[{"role": "user", "content": prompt}]
                     )
                     # Extract prediction from response
-                    prediction = self._parse_response(response.content)
+                    prediction = self._parse_response(response.content, position_mapping)
                     if prediction is not None:
                         self.exp_df.loc[row_idx, 'predicted'] = prediction
                         success = True
