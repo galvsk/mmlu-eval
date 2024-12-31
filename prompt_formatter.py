@@ -21,30 +21,39 @@ class MMLUPromptDefault:
         )
         # For default class, each position maps to itself
         position_mapping = {i: i for i in range(len(self.choices))}
+
         return formatted_question, self.answer, position_mapping
 
 @dataclass
 class MMLUPromptPermuted(MMLUPromptDefault):
+
     def permute_choices(self) -> Tuple[List[str], int, Dict[int, int]]:
-        position_mapping = {}
+        # position_mapping will map from new position -> original position
+        available_positions = list(range(len(self.choices)))
+        available_positions.remove(self.answer)  # Remove current answer position
         
-        available_positions = [i for i in range(len(self.choices)) if i != self.answer]
+        # Pick new position for answer
         new_answer_position = random.choice(available_positions)
         
-        other_choices = [i for i in range(len(self.choices)) if i != self.answer]
-        other_choices.remove(new_answer_position)
-        random.shuffle(other_choices)
+        # Create shuffled list of remaining original positions
+        other_original_positions = [i for i in range(len(self.choices)) if i != self.answer]
+        random.shuffle(other_original_positions)
         
-        position_mapping[new_answer_position] = self.answer
+        # Build position mapping (new_pos -> original_pos)
+        position_mapping = {new_answer_position: self.answer}  # Map new answer position
         
-        original_positions = [i for i in range(len(self.choices)) if i != self.answer]
-        for new_pos, orig_pos in zip(other_choices, original_positions):
+        # Get positions we haven't used for the answer
+        remaining_new_positions = [i for i in range(len(self.choices)) if i != new_answer_position]
+        
+        # Map other positions
+        for new_pos, orig_pos in zip(remaining_new_positions, other_original_positions):
             position_mapping[new_pos] = orig_pos
             
+        # Create new choices list using the mapping
         new_choices = [self.choices[position_mapping[i]] for i in range(len(self.choices))]
             
-        return new_choices, new_answer_position, position_mapping
-    
+        return new_choices, new_answer_position, position_mapping    
+
     def format_question(self) -> Tuple[str, int, Dict[int, int]]:
         letters = ['A', 'B', 'C', 'D']
         permuted_choices, new_answer, position_mapping = self.permute_choices()
@@ -59,3 +68,43 @@ class MMLUPromptPermuted(MMLUPromptDefault):
         )
         
         return formatted_question, new_answer, position_mapping
+
+
+if __name__ == "__main__":
+    test_question = "What is the capital of France?"
+    test_choices = ["Paris", "London", "Berlin", "Madrid"]
+    correct_answer = 0  # Paris
+    
+    default_prompt = MMLUPromptDefault(
+        question=test_question,
+        choices=test_choices,
+        answer=correct_answer
+    )
+    prompt_text, answer_idx, mapping = default_prompt.format_question()
+    print("Default Formatter Test:")
+    print(prompt_text)
+    print(f"Answer index: {answer_idx}")
+    print(f"Position mapping: {mapping}")
+    assert answer_idx == correct_answer, "Default formatter changed answer position"
+    assert mapping[answer_idx] == correct_answer, "Default mapping incorrect"
+    print("\nDefault formatter test passed!")
+    
+    # Test permuted formatter
+    permuted_prompt = MMLUPromptPermuted(
+        question=test_question,
+        choices=test_choices,
+        answer=correct_answer
+    )
+    prompt_text, answer_idx, mapping = permuted_prompt.format_question()
+    print("\nPermuted Formatter Test:")
+    print(prompt_text)
+    print(f"Answer index: {answer_idx}")
+    print(f"Position mapping: {mapping}")
+    
+    # Verify permutation requirements
+    assert answer_idx != correct_answer, "Permuted formatter didn't change answer position"
+    assert mapping[answer_idx] == correct_answer, "Permuted mapping incorrect"
+    assert len(mapping) == len(test_choices), "Mapping missing positions"
+    assert set(mapping.values()) == set(range(len(test_choices))), "Mapping values incorrect"
+    assert set(mapping.keys()) == set(range(len(test_choices))), "Mapping keys incorrect"
+    print("\nPermuted formatter test passed!")
