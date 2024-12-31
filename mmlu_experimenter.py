@@ -7,7 +7,8 @@ import time
 from typing import List, Optional, Dict
 from pathlib import Path
 import hashlib
-from utils import get_api_key, MMLUPromptDefault
+from mmlu_formatter import  MMLUPromptDefault
+from utils import get_api_key
 
 class MMLUExperimenter:
     def __init__(
