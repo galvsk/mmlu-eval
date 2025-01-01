@@ -23,6 +23,12 @@ class MMLUPromptDefault:
         position_mapping = {i: i for i in range(len(self.choices))}
 
         return formatted_question, self.answer, position_mapping
+    
+@dataclass
+class MMLUPromptUpperCase(MMLUPromptDefault):
+    def format_question(self) -> Tuple[str, int, Dict[int, int]]:
+        formatted_question, answer, position_mapping = super().format_question()
+        return formatted_question.upper(), answer, position_mapping 
 
 @dataclass
 class MMLUPromptPermuted(MMLUPromptDefault):
@@ -108,3 +114,20 @@ if __name__ == "__main__":
     assert set(mapping.values()) == set(range(len(test_choices))), "Mapping values incorrect"
     assert set(mapping.keys()) == set(range(len(test_choices))), "Mapping keys incorrect"
     print("\nPermuted formatter test passed!")
+
+    # Test uppercase formatter
+    uppercase_prompt = MMLUPromptUpperCase(
+        question=test_question,
+        choices=test_choices,
+        answer=correct_answer
+    )
+    prompt_text, answer_idx, mapping = uppercase_prompt.format_question()
+    print("\nUppercase Formatter Test:")
+    print(prompt_text)
+    print(f"Answer index: {answer_idx}")
+    print(f"Position mapping: {mapping}")
+    
+    assert prompt_text.isupper(), "Text is not all uppercase"
+    assert answer_idx == correct_answer, "Uppercase formatter changed answer position"
+    assert mapping[answer_idx] == correct_answer, "Uppercase mapping incorrect"
+    print("\nUppercase formatter test passed!")

@@ -2,7 +2,7 @@
 import argparse
 from textwrap import dedent
 from mmlu_experimenter import MMLUExperimenter
-from mmlu_formatter import MMLUPromptDefault, MMLUPromptPermuted
+from mmlu_formatter import MMLUPromptDefault, MMLUPromptPermuted, MMLUPromptUpperCase
 
 
 def parse_args():
@@ -16,7 +16,7 @@ def parse_args():
                 --df-path ref_dataframes/mmlu_test.parquet \\
                 --desc "Baseline test run" \\
                 --max-questions 100 \\
-                --prompt-style permuted \\
+                --prompt-style permuted
         ''')
     )
     
@@ -54,14 +54,14 @@ def parse_args():
         default=10,
         help='How often to save results (in number of questions)'
     )
-    
+
     parser.add_argument(
         '--prompt-style',
         type=str,
-        choices=['default', 'permuted'],
+        choices=['default', 'permuted', 'uppercase'],
         default='default',
         help='Style of prompt formatting to use'
-    )
+    )    
     
     return parser.parse_args()
 
@@ -69,7 +69,11 @@ def main():
     args = parse_args()
     
     # Select prompt style
-    prompt_style = MMLUPromptPermuted if args.prompt_style == 'permuted' else MMLUPromptDefault
+    prompt_style = {
+        'default': MMLUPromptDefault,
+        'permuted': MMLUPromptPermuted,
+        'uppercase': MMLUPromptUpperCase
+    }[args.prompt_style] 
     
     # Initialize experimenter
     experimenter = MMLUExperimenter(
