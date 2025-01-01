@@ -1,0 +1,9 @@
+{
+  "description": "Running first permuted test eval",
+  "model": "claude-3-sonnet-20240229",
+  "save_frequency": 50,
+  "df_path": "ref_dataframes/mmlu_test.parquet",
+  "data_hash": "0242d87435715af1ae9ef2567f9e0711",
+  "created_at": "2024-12-31 11:20:39",
+  "last_updated": "2024-12-31 13:33:53"
+}
