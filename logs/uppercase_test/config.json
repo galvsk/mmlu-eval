@@ -1,0 +1,9 @@
+{
+  "description": "Uppercase test eval",
+  "model": "claude-3-sonnet-20240229",
+  "save_frequency": 100,
+  "df_path": "ref_dataframes/mmlu_test.parquet",
+  "data_hash": "0242d87435715af1ae9ef2567f9e0711",
+  "created_at": "2025-01-01 12:40:58",
+  "last_updated": "2025-01-01 15:14:40"
+}
