@@ -29,6 +29,34 @@ class MMLUPromptUpperCase(MMLUPromptDefault):
     def format_question(self) -> Tuple[str, int, Dict[int, int]]:
         formatted_question, answer, position_mapping = super().format_question()
         return formatted_question.upper(), answer, position_mapping 
+    
+@dataclass
+class MMLUPromptRandomCase(MMLUPromptDefault):
+    question: str
+    choices: List[str]
+    answer: int
+    instructions: str = "Please respond with ONLY the letter (A-D) corresponding to what you believe is the correct answer."
+    
+    def format_question(self) -> Tuple[str, int, Dict[int, int]]:
+        letters = ['A', 'B', 'C', 'D']
+        choices = "\n".join(
+            f"{letter}) {self.randomize_casing(c)}" for letter, c in zip(letters, self.choices)
+        )
+        formatted_question = (
+            f"{self.randomize_casing('Question')}: {self.randomize_casing(self.question)}\n\n"
+            f"{self.randomize_casing('Options')}:\n{choices}\n\n"
+            f"{self.instructions}"
+        )
+        # For default class, each position maps to itself
+        position_mapping = {i: i for i in range(len(self.choices))}
+
+        return formatted_question, self.answer, position_mapping
+    
+    def randomize_casing(self, text: str) -> str:
+        return ''.join(
+            (c.upper() if random.choice([True, False]) else c.lower())
+            for c in text
+        )
 
 @dataclass
 class MMLUPromptPermuted(MMLUPromptDefault):
@@ -131,3 +159,24 @@ if __name__ == "__main__":
     assert answer_idx == correct_answer, "Uppercase formatter changed answer position"
     assert mapping[answer_idx] == correct_answer, "Uppercase mapping incorrect"
     print("\nUppercase formatter test passed!")
+
+    # Test random case formatter
+    random_case_prompt = MMLUPromptRandomCase(
+        question=test_question,
+        choices=test_choices,
+        answer=correct_answer
+    )
+    prompt_text, answer_idx, mapping = random_case_prompt.format_question()
+    print("\nRandom Case Formatter Test:")
+    print(prompt_text)
+    print(f"Answer index: {answer_idx}")
+    print(f"Position mapping: {mapping}")
+
+    # Test that case has been modified (at least one char is upper and one is lower)
+    text_without_spaces = ''.join(c for c in prompt_text if not c.isspace())
+    has_upper = any(c.isupper() for c in text_without_spaces)
+    has_lower = any(c.islower() for c in text_without_spaces)
+    assert has_upper and has_lower, "Text should have mix of upper and lower case"
+    assert answer_idx == correct_answer, "Random case formatter changed answer position"
+    assert mapping[answer_idx] == correct_answer, "Random case mapping incorrect"
+    print("\nRandom case formatter test passed!")
