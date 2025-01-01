@@ -103,6 +103,47 @@ class MMLUPromptPermuted(MMLUPromptDefault):
         
         return formatted_question, new_answer, position_mapping
 
+@dataclass
+class MMLUPromptDuplicateWrong(MMLUPromptDefault):
+    instructions: str = "Please respond with ONLY the letter (A-G) corresponding to what you believe is the correct answer."
+    
+    def format_question(self) -> Tuple[str, int, Dict[int, int]]:
+        letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        
+        # Double all choices an remove first instance of correct answer
+        expanded_choices = list(self.choices) * 2
+        expanded_choices.pop(self.answer + len(self.choices))
+        
+        # Shuffle the expanded choices
+        #random.seed(666)  # For reproducible tests
+        #random.shuffle(expanded_choices)
+        
+        # Create position mapping to track where the original correct answer went
+        position_mapping = {}
+        for new_pos, choice in enumerate(expanded_choices):
+            if choice == self.choices[self.answer]:
+                # Map the new position back to the original correct answer position
+                position_mapping[new_pos] = self.answer
+            else:
+                # For wrong answers, map to their original positions
+                original_pos = list(self.choices).index(choice)
+                position_mapping[new_pos] = original_pos
+        
+        # Format the choices with letters
+        choices = "\n".join(
+            f"{letter}) {c}" for letter, c in zip(letters, expanded_choices)
+        )
+        
+        formatted_question = (
+            f"Question: {self.question}\n\n"
+            f"Options:\n{choices}\n\n"
+            f"{self.instructions}"
+        )
+        
+        # Find the new position of the correct answer
+        new_answer = expanded_choices.index(self.choices[self.answer])
+        return formatted_question, new_answer, position_mapping
+
 
 if __name__ == "__main__":
     test_question = "What is the capital of France?"
@@ -180,3 +221,25 @@ if __name__ == "__main__":
     assert answer_idx == correct_answer, "Random case formatter changed answer position"
     assert mapping[answer_idx] == correct_answer, "Random case mapping incorrect"
     print("\nRandom case formatter test passed!")
+   
+    # Test duplicate wrong answer prompting 
+    duplicate_prompt = MMLUPromptDuplicateWrong(
+        question=test_question,
+        choices=test_choices,
+        answer=correct_answer
+    )
+    
+    prompt_text, answer_idx, mapping = duplicate_prompt.format_question()
+    print("Duplicate Wrong Answers Formatter Test:")
+    print(prompt_text)
+    print(f"Answer index: {answer_idx}")
+    print(f"Position mapping: {mapping}")
+    options = [line.split(') ')[1] for line in prompt_text.split('\n') 
+              if line.strip() and line.strip()[0].isalpha() and ') ' in line]
+    assert options.count(test_choices[correct_answer]) == 1, "Correct answer should appear exactly once"
+    # Test wrong answers appear twice
+    for i, choice in enumerate(test_choices):
+        if i != correct_answer:
+            assert options.count(choice) == 2, f"Wrong answer {choice} should appear exactly twice"
+    assert mapping[answer_idx] == correct_answer, "Position mapping doesn't correctly track correct answer"
+    print("\nDuplicate wrong answers formatter test passed!")

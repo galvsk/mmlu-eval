@@ -157,13 +157,18 @@ class MMLUExperimenter:
         """Parse Claude's response to extract the predicted answer index.
         Maps the response back to the original answer position.
         """
+        if len(position_mapping) == 4:
+            reference_answers = ('A', 'B', 'C', 'D')
+        elif len(position_mapping) == 7:
+            reference_answers = ('A', 'B', 'C', 'D', 'E', 'F', 'G')
+        else:
+            raise ValueError('Only 4 or 7 multiple choice answers valid.')
+
         try:
             output = response[0].text
-            if len(output) == 1 and output in ('A', 'B', 'C', 'D'):
-                # Convert letter to number (A=0, B=1, C=2, D=3)
+            if len(output) == 1 and output in reference_answers:
                 letter = output[0].upper()
                 response_idx = ord(letter) - ord('A')
-                # Map back to original position
                 return position_mapping[response_idx]
             else:
                 return -1

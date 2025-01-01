@@ -2,7 +2,8 @@
 import argparse
 from textwrap import dedent
 from mmlu_experimenter import MMLUExperimenter
-from mmlu_formatter import MMLUPromptDefault, MMLUPromptPermuted, MMLUPromptUpperCase, MMLUPromptRandomCase
+from mmlu_formatter import MMLUPromptDefault, MMLUPromptPermuted, MMLUPromptUpperCase
+from mmlu_formatter import MMLUPromptRandomCase, MMLUPromptDuplicateWrong
 
 
 def parse_args():
@@ -58,7 +59,7 @@ def parse_args():
     parser.add_argument(
         '--prompt-style',
         type=str,
-        choices=['default', 'permuted', 'uppercase', 'randomcase'],
+        choices=['default', 'permuted', 'uppercase', 'randomcase', 'duplicatewrong'],
         default='default',
         help='Style of prompt formatting to use'
     )    
@@ -73,8 +74,9 @@ def main():
         'default': MMLUPromptDefault,
         'permuted': MMLUPromptPermuted,
         'uppercase': MMLUPromptUpperCase,
-        'randomcase': MMLUPromptRandomCase
-    }[args.prompt_style] 
+        'randomcase': MMLUPromptRandomCase,
+        'duplicatewrong': MMLUPromptDuplicateWrong
+        }[args.prompt_style] 
     
     # Initialize experimenter
     experimenter = MMLUExperimenter(
