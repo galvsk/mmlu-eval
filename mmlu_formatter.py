@@ -8,7 +8,8 @@ class MMLUPromptDefault:
     choices: List[str]
     answer: int
     instructions: str = "Please respond with ONLY the letter (A-D) corresponding to what you believe is the correct answer."
-    
+    subject: str = None
+   
     def format_question(self) -> Tuple[str, int, Dict[int, int]]:
         letters = ['A', 'B', 'C', 'D']
         choices = "\n".join(
@@ -32,11 +33,6 @@ class MMLUPromptUpperCase(MMLUPromptDefault):
     
 @dataclass
 class MMLUPromptRandomCase(MMLUPromptDefault):
-    question: str
-    choices: List[str]
-    answer: int
-    instructions: str = "Please respond with ONLY the letter (A-D) corresponding to what you believe is the correct answer."
-    
     def format_question(self) -> Tuple[str, int, Dict[int, int]]:
         letters = ['A', 'B', 'C', 'D']
         choices = "\n".join(
