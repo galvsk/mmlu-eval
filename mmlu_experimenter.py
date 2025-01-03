@@ -4,10 +4,11 @@ import pandas as pd
 import anthropic
 import json
 import time
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Literal
 from pathlib import Path
 import hashlib
 from mmlu_formatter import  MMLUPromptDefault
+from model_api import ClaudeAPI, DeepseekAPI, ClaudeConfig, DeepseekConfig, ModelAPI
 from utils import get_api_key
 
 class MMLUExperimenter:
@@ -16,7 +17,7 @@ class MMLUExperimenter:
         experiment_path: str,
         df_path: str,
         description: None | str = None,
-        model: str = "claude-3-sonnet-20240229",
+        api: Literal['claude', 'deepseek'] = 'claude',
         save_frequency: int = 10,
         prompt_style: MMLUPromptDefault = MMLUPromptDefault
     ):
@@ -27,17 +28,21 @@ class MMLUExperimenter:
             experiment_path: Path to experiment directory
             df_path: Path to dataset parquet
             description: Description of experiment (required for new experiments)
-            model: Claude model to use
+            api : Which LLM to use (Claude and Deepseek supported)
             save_frequency: How often to save results (in number of questions)
             prompt_style: Class defining how to present the MMLU questions
         """
         self.experiment_path = Path(experiment_path)
         self.df_path = Path(df_path)
-        self.model = model
         self.save_frequency = save_frequency
         
         # Set up client
-        self.client = anthropic.Client(api_key=get_api_key())
+        if api == 'claude':
+            self.api = ClaudeAPI(ClaudeConfig())
+        elif api == 'deepseek':
+            self.api = DeepseekAPI(DeepseekConfig())
+        else:
+            raise ValueError(f"Unsupported API type: {api}")
         
         # Load data
         self.df = self._load_and_validate_data()
@@ -72,11 +77,17 @@ class MMLUExperimenter:
         """Set up a new experiment."""
         # Create experiment directory
         self.experiment_path.mkdir(parents=True, exist_ok=False)
+
+        # Get model info from API config
+        model_info = {
+            'type': 'claude' if isinstance(self.api, ClaudeAPI) else 'deepseek',
+            'model': self.api.config.model
+        }
         
         # Save experiment config
         config = {
             'description': description,
-            'model': self.model,
+            'model': model_info,
             'save_frequency': self.save_frequency,
             'df_path': str(self.df_path),
             'data_hash': hashlib.md5(self.df.to_string().encode()).hexdigest(),
@@ -89,6 +100,7 @@ class MMLUExperimenter:
         # Initialize experiment results DataFrame
         self.exp_df = self.df.copy(deep=True)
         self.exp_df['predicted'] = pd.NA
+        self.exp_df['logprobs'] = pd.NA
         
         # Save initial state
         self._save_results()
@@ -154,7 +166,7 @@ class MMLUExperimenter:
         return formatter.format_question()
     
     def _parse_response(self, response: str, position_mapping: Dict[int, int]) -> Optional[int]:
-        """Parse Claude's response to extract the predicted answer index.
+        """Parse LLMs response to extract the predicted answer index.
         Maps the response back to the original answer position.
         """
         if len(position_mapping) == 4:
@@ -206,16 +218,12 @@ class MMLUExperimenter:
             success = False
             while not success:
                 try:
-                    response = self.client.messages.create(
-                        model=self.model,
-                        max_tokens=5,
-                        temperature=0,
-                        messages=[{"role": "user", "content": prompt}]
-                    )
+                    response = self.api.get_completion(prompt)
                     # Extract prediction from response
-                    prediction = self._parse_response(response.content, position_mapping)
+                    prediction = self._parse_response(response['prediction'], position_mapping)
                     if prediction is not None:
                         self.exp_df.loc[row_idx, 'predicted'] = prediction
+                        self.exp_df.loc[row_idx, 'logprobs'] = response['logprob']
                         success = True
                     else:
                         print(f"Could not parse prediction from response: {response.content}")

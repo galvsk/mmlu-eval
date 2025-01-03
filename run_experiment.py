@@ -17,6 +17,7 @@ def parse_args():
                 --df-path ref_dataframes/mmlu_test.parquet \\
                 --desc "Baseline test run" \\
                 --max-questions 100 \\
+                --api claude \\
                 --prompt-style permuted
         ''')
     )
@@ -47,6 +48,14 @@ def parse_args():
         type=int,
         default=None,
         help='Maximum number of questions to process'
+    )
+
+    parser.add_argument(
+        '--api',
+        type=str,
+        choices=['claude', 'deepseek'],
+        default='claude',
+        help='Which model API to use'
     )
     
     parser.add_argument(
@@ -82,6 +91,7 @@ def main():
     experimenter = MMLUExperimenter(
         experiment_path=args.exp_path,
         df_path=args.df_path,
+        api=args.api,
         description=args.desc,
         save_frequency=args.save_frequency,
         prompt_style=prompt_style
@@ -96,7 +106,7 @@ def main():
     results = experimenter.get_results_summary()
     print("\nExperiment Results:")
     print(f"Description: {results['description']}")
-    print(f"Model: {results['model']}")
+    print(f"Model: {results['model_info']['type']}")
     print(f"Prompt Style: {args.prompt_style}")
     print(f"Questions Completed: {results['completed_questions']}/{results['total_questions']}")
     print(f"Accuracy: {results['accuracy']:.2%}")
