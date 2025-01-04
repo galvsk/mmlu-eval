@@ -106,7 +106,7 @@ def main():
     results = experimenter.get_results_summary()
     print("\nExperiment Results:")
     print(f"Description: {results['description']}")
-    print(f"Model: {results['model_info']['type']}")
+    print(f"Model: {results['model']['type']}")
     print(f"Prompt Style: {args.prompt_style}")
     print(f"Questions Completed: {results['completed_questions']}/{results['total_questions']}")
     print(f"Accuracy: {results['accuracy']:.2%}")
