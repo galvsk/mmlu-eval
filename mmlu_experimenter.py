@@ -100,6 +100,7 @@ class MMLUExperimenter:
         # Initialize experiment results DataFrame
         self.exp_df = self.df.copy(deep=True)
         self.exp_df['predicted'] = pd.NA
+        self.exp_df['response'] = ''
         self.exp_df['logprobs'] = pd.NA
         
         # Save initial state
@@ -177,7 +178,7 @@ class MMLUExperimenter:
             raise ValueError('Only 4 or 7 multiple choice answers valid.')
 
         try:
-            output = response[0].text
+            output = response
             if len(output) == 1 and output in reference_answers:
                 letter = output[0].upper()
                 response_idx = ord(letter) - ord('A')
@@ -219,14 +220,16 @@ class MMLUExperimenter:
             while not success:
                 try:
                     response = self.api.get_completion(prompt)
-                    # Extract prediction from response
-                    prediction = self._parse_response(response['prediction'], position_mapping)
-                    if prediction is not None:
-                        self.exp_df.loc[row_idx, 'predicted'] = prediction
+                    # Format answer as index from choices (if possible)
+                    output = self._parse_response(response['prediction'], position_mapping)
+                    if output is not None:
+                        # Save raw response, predicted answer, and probability
+                        self.exp_df.loc[row_idx, 'response'] = response['prediction']
+                        self.exp_df.loc[row_idx, 'predicted'] = output
                         self.exp_df.loc[row_idx, 'logprobs'] = response['logprob']
                         success = True
                     else:
-                        print(f"Could not parse prediction from response: {response.content}")
+                        print(f"Could not parse prediction from response: {response}")
                         if not retry_errors:
                             break
                             

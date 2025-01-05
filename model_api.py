@@ -50,17 +50,22 @@ class DeepseekAPI(ModelAPI):
         )
         
     def get_completion(self, prompt: str) -> Dict[str, Any]:
-        response = self.client.chat.completions.create(
-            model=self.config.model,
-            messages=[
-                {"role": "system", "content": self.config.system_prompt},
-                {"role": "user", "content": prompt}
-            ],
-            logprobs=True,
-            max_tokens=5,
-            temperature=0
-        )
-        return {
-            'prediction': response.choices[0].message.content,
-            'logprob': response.choices[0].logprobs.content[0].logprob if hasattr(response.choices[0], 'logprobs') else None
-        }
+        try:
+            response = self.client.chat.completions.create(
+                model=self.config.model,
+                messages=[
+                    {"role": "system", "content": self.config.system_prompt},
+                    {"role": "user", "content": prompt}
+                ],
+                logprobs=True,
+                max_tokens=100,
+                temperature=0
+            )
+            return {
+                'prediction': response.choices[0].message.content,
+                'logprob': response.choices[0].logprobs.content[0].logprob if hasattr(response.choices[0], 'logprobs') else None
+            }
+        except Exception as e:
+            if isinstance(e, Exception) and 'Content Exists Risk' in str(e):
+                return {'prediction': 'refusal', 'logprob': None}
+
