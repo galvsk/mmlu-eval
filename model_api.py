@@ -38,7 +38,6 @@ class ClaudeAPI(ModelAPI):
         )
         return {
             'prediction': response.content[0].text[0],
-            'logprob': None
         }
 
 class DeepseekAPI(ModelAPI):
@@ -57,15 +56,12 @@ class DeepseekAPI(ModelAPI):
                     {"role": "system", "content": self.config.system_prompt},
                     {"role": "user", "content": prompt}
                 ],
-                logprobs=True,
                 max_tokens=100,
                 temperature=0
             )
             return {
                 'prediction': response.choices[0].message.content,
-                'logprob': response.choices[0].logprobs.content[0].logprob if hasattr(response.choices[0], 'logprobs') else None
             }
         except Exception as e:
             if isinstance(e, Exception) and 'Content Exists Risk' in str(e):
-                return {'prediction': 'refusal', 'logprob': None}
-
+                return {'prediction': 'refusal'}

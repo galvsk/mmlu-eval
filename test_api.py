@@ -1,3 +1,4 @@
+import random
 import pandas as pd
 from mmlu_formatter import MMLUPromptDefault
 from model_api import ClaudeAPI, DeepseekAPI, ClaudeConfig, DeepseekConfig
@@ -29,14 +30,14 @@ class LLMTester:
             'correct': chr(65 + correct_answer),
             'is_correct': response['prediction'] == chr(65 + correct_answer),
             'full_prompt': formatted_question,
-            'logprob': response.get('logprob')
         }
 
 
 def main():
     tester = LLMTester()
     df = pd.read_parquet('ref_dataframes/mmlu_test.parquet')
-    question = df.iloc[0].to_dict()
+    idx = random.randint(0, len(df)-1)
+    question = df.iloc[idx].to_dict()
     
     # Test with both APIs
     claude_result = tester.test_single_question(question, 'claude')
@@ -52,7 +53,6 @@ def main():
     print(f"Deepseek:")
     print(f"Answer: {deepseek_result['predicted']}")
     print(f"Correct: {deepseek_result['is_correct']}")
-    print(f"Logprob: {deepseek_result['logprob']:.3f}")
 
 
 if __name__ == "__main__":

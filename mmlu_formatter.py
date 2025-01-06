@@ -106,13 +106,13 @@ class MMLUPromptDuplicateWrong(MMLUPromptDefault):
     def format_question(self) -> Tuple[str, int, Dict[int, int]]:
         letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
         
-        # Double all choices an remove first instance of correct answer
+        # Double all choices an remove one instance of correct answer
         expanded_choices = list(self.choices) * 2
         expanded_choices.pop(self.answer + len(self.choices))
         
         # Shuffle the expanded choices
-        random.seed(666)  # For reproducible tests
-        random.shuffle(expanded_choices)
+        #random.seed(666)  # For reproducible tests
+        #random.shuffle(expanded_choices)
         
         # Create position mapping to track where the original correct answer went
         position_mapping = {}
