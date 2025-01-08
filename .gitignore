@@ -1,4 +1,5 @@
 __pycache__
+.DS_STORE
 .env
 MMLU
 ref_dataframes
