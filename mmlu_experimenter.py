@@ -100,7 +100,6 @@ class MMLUExperimenter:
         # Initialize experiment results DataFrame
         self.exp_df = self.df.copy(deep=True)
         self.exp_df['predicted'] = pd.NA
-        self.exp_df['response'] = ''
         
         # Save initial state
         self._save_results()
@@ -136,7 +135,7 @@ class MMLUExperimenter:
     def _save_results(self):
         """Save current results and update config."""
         # Save results
-        self.exp_df.to_parquet(self.results_path)
+        self.exp_df.to_parquet(self.results_path, index=False)
         
         # Calculate and print progress
         total = len(self.exp_df)
@@ -177,12 +176,16 @@ class MMLUExperimenter:
             raise ValueError('Only 4 or 7 multiple choice answers valid.')
 
         try:
-            output = response
-            if len(output) == 1 and output in reference_answers:
-                letter = output[0].upper()
+            # Valid answers can be of the form A-G, upper or lower case, with a '.' or ')' added after letter
+            pattern = r'^([A-Ga-g])[.).]?.*$'
+            match = re.match(pattern, response.strip())
+            # If we find a match, extract first letter and convert to index in answer list
+            if match:
+                letter = match.group(1).upper()
                 response_idx = ord(letter) - ord('A')
                 return position_mapping[response_idx]
             else:
+                print(f"Could not parse response : {response}")
                 return -1
         except Exception:
             return None
@@ -222,8 +225,7 @@ class MMLUExperimenter:
                     # Format answer as index from choices (if possible)
                     output = self._parse_response(response['prediction'], position_mapping)
                     if output is not None:
-                        # Save raw response, predicted answer
-                        self.exp_df.loc[row_idx, 'response'] = response['prediction']
+                        # Save predicted answer
                         self.exp_df.loc[row_idx, 'predicted'] = output
                         success = True
                     else:
