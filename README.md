@@ -144,6 +144,9 @@ python scripts/run_answer_generator.py \
 - Claude 3.5 Sonnet for help in developing codebase
 - Anthropic and Deepseek for API access
 
+
+## License
+
 MIT License
 
 Copyright (c) 2024 Galvin Khara
