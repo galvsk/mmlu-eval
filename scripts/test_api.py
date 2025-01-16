@@ -1,7 +1,9 @@
 import random
 import pandas as pd
-from mmlu_formatter import MMLUPromptDefault
-from model_api import ClaudeAPI, DeepseekAPI, ClaudeConfig, DeepseekConfig
+from mmlu_eval.formatter import MMLUPromptDefault
+from mmlu_eval.model_api import ClaudeAPI, DeepseekAPI, ClaudeConfig, DeepseekConfig
+from mmlu_eval.paths import get_ref_data_path, MMLU_TEST_FILE
+
 
 class LLMTester:
     def __init__(self):
@@ -24,7 +26,7 @@ class LLMTester:
             response = self.deepseek_api.get_completion(formatted_question)
         else:
             raise ValueError(f"Unsupported client type: {client_type}")
-        
+
         return {
             'predicted': response['prediction'],
             'correct': chr(65 + correct_answer),
@@ -35,21 +37,26 @@ class LLMTester:
 
 def main():
     tester = LLMTester()
-    df = pd.read_parquet('ref_dataframes/mmlu_test.parquet')
+    # Load test data using paths module
+    df = pd.read_parquet(get_ref_data_path(MMLU_TEST_FILE))
     idx = random.randint(0, len(df)-1)
     question = df.iloc[idx].to_dict()
-    
+
+    print(f"\nSelected question {idx}")
+    if 'subject' in question:
+        print(f"Subject: {question['subject']}")
+
     # Test with both APIs
     claude_result = tester.test_single_question(question, 'claude')
     deepseek_result = tester.test_single_question(question, 'deepseek')
 
     # Print results
     print(f"\nQuestion asked:\n{claude_result['full_prompt']}\n")
-    
+
     print(f"Claude:")
     print(f"Answer: {claude_result['predicted']}")
     print(f"Correct: {claude_result['is_correct']}\n")
-    
+
     print(f"Deepseek:")
     print(f"Answer: {deepseek_result['predicted']}")
     print(f"Correct: {deepseek_result['is_correct']}")

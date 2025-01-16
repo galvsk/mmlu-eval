@@ -1,5 +1,6 @@
 __pycache__
 .DS_STORE
 .env
-MMLU
+raw_mmlu
 ref_dataframes
+*egg-info

@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pylab as plt
-from utils import bootstrap_train_vs_test_performance
+from mmlu_eval.analysis import bootstrap_train_vs_test_performance
 
 # Define location of baseline train and test evals for each model
 claude_paths = ['../claude_logs/baseline_train', '../claude_logs/baseline_test']

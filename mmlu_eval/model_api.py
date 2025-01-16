@@ -3,7 +3,7 @@ from typing import Dict, Any
 from abc import ABC, abstractmethod
 import anthropic
 from openai import OpenAI
-from utils import get_api_key
+from mmlu_eval.utils import get_api_key
 
 
 @dataclass

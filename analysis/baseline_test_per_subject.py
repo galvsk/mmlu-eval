@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pylab as plt
-from utils import MMLU_CATEGORY_MAP, bootstrap_by_subject
+from mmlu_eval.analysis import MMLU_CATEGORY_MAP, bootstrap_by_subject
 
 # %% Load baseline test evals for each model
 claude = pd.read_parquet('../claude_logs/baseline_test/results.parquet')

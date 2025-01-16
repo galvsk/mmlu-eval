@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import List, Tuple, Dict
 import random
 
+
 @dataclass
 class MMLUPromptDefault:
     question: str

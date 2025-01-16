@@ -1,9 +1,18 @@
-#!/usr/bin/env python3
 import argparse
 from textwrap import dedent
-from mmlu_experimenter import MMLUExperimenter
-from mmlu_formatter import MMLUPromptDefault, MMLUPromptPermuted, MMLUPromptUpperCase
-from mmlu_formatter import MMLUPromptRandomCase, MMLUPromptDuplicateWrong
+from mmlu_eval.experimenter import MMLUExperimenter
+from mmlu_eval.formatter import (
+    MMLUPromptDefault, 
+    MMLUPromptPermuted, 
+    MMLUPromptUpperCase,
+    MMLUPromptRandomCase, 
+    MMLUPromptDuplicateWrong
+)
+from mmlu_eval.paths import (
+    get_ref_data_path,
+    get_experiment_path,
+    MMLU_TEST_FILE,
+)
 
 
 def parse_args():
@@ -12,37 +21,36 @@ def parse_args():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=dedent('''
             Example usage:
-            python run_experiment.py \\
-                --exp-path experiments/baseline \\
-                --df-path ref_dataframes/mmlu_test.parquet \\
+            python run_mmlu_eval.py \\
+                --experiment baseline \\
                 --desc "Baseline test run" \\
                 --max-questions 100 \\
                 --api claude \\
                 --prompt-style permuted
         ''')
     )
-    
+
     parser.add_argument(
-        '--exp-path',
+        '--experiment',
         type=str,
         required=True,
-        help='Path to store experiment results'
+        help='Name of experiment directory to create in logs'
     )
-    
+
     parser.add_argument(
-        '--df-path',
+        '--test-data',
         type=str,
-        required=True,
-        help='Path to MMLU dataset parquet file'
+        default=MMLU_TEST_FILE,
+        help='Name of test data file in ref_dataframes'
     )
-    
+
     parser.add_argument(
         '--desc',
         type=str,
-        default=None,
-        help='Description of the experiment (required for new experiments)'
+        required=True,
+        help='Description of the experiment'
     )
-    
+
     parser.add_argument(
         '--max-questions',
         type=int,
@@ -57,7 +65,7 @@ def parse_args():
         default='claude',
         help='Which model API to use'
     )
-    
+
     parser.add_argument(
         '--save-frequency',
         type=int,
@@ -71,13 +79,13 @@ def parse_args():
         choices=['default', 'permuted', 'uppercase', 'randomcase', 'duplicatewrong'],
         default='default',
         help='Style of prompt formatting to use'
-    )    
-    
+    )
+
     return parser.parse_args()
 
 def main():
     args = parse_args()
-    
+
     # Select prompt style
     prompt_style = {
         'default': MMLUPromptDefault,
@@ -85,32 +93,34 @@ def main():
         'uppercase': MMLUPromptUpperCase,
         'randomcase': MMLUPromptRandomCase,
         'duplicatewrong': MMLUPromptDuplicateWrong
-        }[args.prompt_style] 
-    
+    }[args.prompt_style]
+
     # Initialize experimenter
     experimenter = MMLUExperimenter(
-        experiment_path=args.exp_path,
-        df_path=args.df_path,
+        experiment_path=get_experiment_path(args.experiment, args.api),
+        df_path=get_ref_data_path(args.test_data),
         api=args.api,
         description=args.desc,
         save_frequency=args.save_frequency,
         prompt_style=prompt_style
     )
-    
+
     # Run experiment
     experimenter.run_experiment(
         max_questions=args.max_questions,
     )
-    
+
     # Print results
     results = experimenter.get_results_summary()
     print("\nExperiment Results:")
     print(f"Description: {results['description']}")
     print(f"Model: {results['model']['type']}")
+    print(f"Data: {args.test_data}")
     print(f"Prompt Style: {args.prompt_style}")
     print(f"Questions Completed: {results['completed_questions']}/{results['total_questions']}")
     print(f"Accuracy: {results['accuracy']:.2%}")
     print(f"Last Updated: {results['last_updated']}")
+    print(f"\nResults saved to: {get_experiment_path(args.experiment, args.api)}")
 
 if __name__ == "__main__":
     main()

@@ -7,9 +7,9 @@ import time
 from typing import List, Optional, Dict, Literal
 from pathlib import Path
 import hashlib
-from mmlu_formatter import  MMLUPromptDefault
-from model_api import ClaudeAPI, DeepseekAPI, ClaudeConfig, DeepseekConfig, ModelAPI
-from utils import get_api_key
+from mmlu_eval.formatter import MMLUPromptDefault
+from mmlu_eval.model_api import ClaudeAPI, DeepseekAPI, ClaudeConfig, DeepseekConfig, ModelAPI
+
 
 class MMLUExperimenter:
     def __init__(

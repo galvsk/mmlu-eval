@@ -1,9 +1,14 @@
-#!/usr/bin/env python3
 import argparse
 from textwrap import dedent
 from pathlib import Path
-from model_api import ClaudeAPI, DeepseekAPI, ClaudeConfig, DeepseekConfig
-from dataset_generator import DatasetGenerator, AlternativeAnswerConfig
+from mmlu_eval.model_api import ClaudeAPI, DeepseekAPI, ClaudeConfig, DeepseekConfig
+from mmlu_eval.answer_generator import DatasetGenerator, AlternativeAnswerConfig
+from mmlu_eval.paths import (
+    get_ref_data_path, 
+    ALTERNATIVE_DATA_DIR,
+    MMLU_TEST_FILE
+)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -52,7 +57,7 @@ def parse_args():
     parser.add_argument(
         '--seed',
         type=int,
-        default=42,
+        default=666,
         help='Random seed for reproducibility'
     )
     
@@ -86,17 +91,17 @@ def main():
     
     # Initialize generator
     generator = DatasetGenerator(
-        df_path=args.df_path,
+        df_path=get_ref_data_path(MMLU_TEST_FILE),
         api=api,
         config=config,
-        output_path=args.output_dir
+        output_path=ALTERNATIVE_DATA_DIR
     )
     
     # Generate dataset
     print(f"\nGenerating alternative dataset:")
     print(f"- Sampling {args.num_samples} questions")
     print(f"- Using {args.api} API")
-    print(f"- Output directory: {args.output_dir}")
+    print(f"- Output directory: {ALTERNATIVE_DATA_DIR}")
     print(f"- Seed: {args.seed}\n")
     
     alternative_df = generator.create_alternative_dataset(seed=args.seed)
@@ -112,9 +117,9 @@ def main():
     
     # Print output files
     model_id = api.config.model if hasattr(api, 'config') else "unknown_model"
-    output_file = output_dir / f"alternative_dataset_{model_id}_{args.seed}.parquet"
-    config_file = output_dir / f"alternative_dataset_{model_id}_{args.seed}_config.json"
-    indices_file = output_dir / f"sampled_indices_{args.seed}.json"
+    output_file = ALTERNATIVE_DATA_DIR / f"alternative_dataset_{model_id}_{args.seed}.parquet"
+    config_file = ALTERNATIVE_DATA_DIR / f"alternative_dataset_{model_id}_{args.seed}_config.json"
+    indices_file = ALTERNATIVE_DATA_DIR / f"sampled_indices_{args.seed}.json"
     print(f"\nOutput files:")
     print(f"- Dataset: {output_file}")
     print(f"- Config:  {config_file}")

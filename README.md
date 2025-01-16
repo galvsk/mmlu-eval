@@ -1,74 +1,99 @@
-# MMLU Experimentation Framework
+# MMLU Evaluation Framework
 
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
+## Overview
 
-This repository contains a framework for running experiments with Large Language Models (LLMs) on the Massive Multitask Language Understanding (MMLU) benchmark. It currently supports Claude and Deepseek models, with different prompt formatting strategies.
+This project provides a comprehensive framework for evaluating language models on the Massive Multitask Language Understanding (MMLU) benchmark. The framework supports:
+
+- Multiple model APIs (currently Claude and Deepseek)
+- Flexible prompt formatting strategies
+- Detailed performance analysis
+- LLM generated incorrect answers
 
 ## Features
 
-- Support for multiple LLM APIs:
-  - Claude (via Anthropic API)
-  - Deepseek (via OpenAI-compatible API)
-- Various prompt formatting strategies:
-  - Default: Standard multiple-choice format
-  - Permuted: Randomly shuffles answer choices
-  - Uppercase: Converts entire prompt to uppercase
-  - Random Case: Randomly varies character case
-  - Duplicate Wrong: Duplicates incorrect choices (7 total options)
-- Experiment management:
-  - Automatic progress tracking and checkpointing
-  - Results analysis and accuracy calculation
-  - Resume capability for interrupted experiments
+- Multiple prompt formatting styles:
+  - Default formatting : standard prompt (see `mmlu_eval/formatter.py`)
+  - Permuted choice order : randomly swap order of the answers
+  - Uppercase formatting : change all alphabetical characters to uppercase
+  - Random case formatting : randomly alternative between uppercase and lowercase alphabetical characters
+  - Duplicate wrong answers : repeat all incorrect answers and permute order (six wrong, one right)
 
-## Installation
+- Robust experiment tracking
+  - Checkpointing
+  - Progress saving
+  - Detailed result logging
 
-1. Clone the repository:
+- Alternative answer generation
+  - Generate challenging incorrect answers
+  - Support for different difficulty levels
+
+## Prerequisites
+
+- Python 3.8+
+- API keys for Claude and/or Deepseek
+- Mac with Keychain access (for API key management)
+
+### API Key Management
+
+The project uses Mac's system keychain to securely store API keys. 
+
+1. Set up API keys in the Keychain:
+   - For Claude API key:
+     ```bash
+     security add-generic-password -a "your_email@example.com" -s "claude-api-key" -w "YOUR_CLAUDE_API_KEY"
+     ```
+   - For Deepseek API key:
+     ```bash
+     security add-generic-password -a "your_email@example.com" -s "deepseek-api-key" -w "YOUR_DEEPSEEK_API_KEY"
+     ```
+
+2. Key retrieval is handled by `mmlu_eval/utils.py`:
+   - The `get_api_key()` function automatically retrieves keys from the system keychain
+   - Supports both Claude and Deepseek API key management
+
+Note: Replace `your_email@example.com` with the email associated with your API keys, and use your actual API keys.
+
+### Installation
+
+1. Clone the repository
 ```bash
-git clone <repository-url>
-cd <repository-name>
+git clone https://github.com/galvsk/mmlu-eval.git
+cd mmlu-eval
 ```
 
-2. Install required packages:
+2. Install the package in editable mode
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
-3. Set up API keys:
-- Store your API keys securely using the macOS Keychain:
-  - Claude API key with service name: `claude-api-key`
-  - Deepseek API key with service name: `deepseek-api-key`
-  - Include the correct email for your associated api keys
+## Quick Start
 
-## Dataset Preparation
+### 1. Preparing Data
 
-1. Download the MMLU dataset:
+1. Download MMLU dataset
 ```bash
-./download_mmlu.sh
+sh download_mmlu.sh
 ```
 
-2. Generate formatted dataframes:
+2. Generate reference dataframes
 ```bash
-python generate_dataframes.py
+python scripts/generate_dataframes.py
 ```
 
-This will create parquet files in the `ref_dataframes` directory:
-- `mmlu_train.parquet`: Training dataset
-- `mmlu_test.parquet`: Test dataset
+This two-step process:
+- Downloads the raw MMLU dataset using the provided shell script
+- Processes the raw data and generates reference dataframes for evaluation
 
-## Running Experiments
-
-Use the `run_experiment.py` script to conduct experiments. Example usage:
+### 2. Running Experiments
 
 ```bash
-python run_experiment.py \
-    --exp-path experiments/baseline \
-    --df-path ref_dataframes/mmlu_test.parquet \
+python scripts/run_mmlu_eval.py \
+    --experiment baseline \
     --desc "Baseline test run" \
     --max-questions 100 \
     --api claude \
-    --prompt-style permuted
+    --prompt-style default
 ```
-
 ### Command Line Arguments
 
 - `--exp-path`: Directory to store experiment results
@@ -84,38 +109,68 @@ python run_experiment.py \
   - `randomcase`: Random case variations
   - `duplicatewrong`: Duplicates incorrect choices
 
-## Testing
+### 3. Generating Alternative Incorrect Answers
 
-To test individual components:
+The alternative answer generation is designed to systematically create challenging yet incorrect responses from language models. This helps in:
+- Analyzing model vulnerability to plausible but incorrect options
+- Understanding how different language models generate incorrect answers
+- Probing the reasoning capabilities of AI models
 
 ```bash
-# Test API connectivity
-python test_api.py
-
-# Test prompt formatters
-python mmlu_formatter.py
+python scripts/run_answer_generator.py \
+    --df-path ref_dataframes/mmlu_test.parquet \
+    --output-dir alternative_datasets \
+    --num-samples 1000 \
+    --api claude
 ```
 
-## Project Structure
+Key features of alternative answer generation:
+- Generates multiple incorrect answers for each question
+- Configurable difficulty of incorrect responses
+- Supports generation from different model APIs (Claude, Deepseek)
+- Creates datasets for further analysis of model performance
 
-- `run_experiment.py`: Main script for running experiments
-- `mmlu_experimenter.py`: Core experimentation logic
-- `mmlu_formatter.py`: Different prompt formatting strategies
-- `model_api.py`: API interfaces for different LLMs
-- `utils.py`: Utility functions
-- `generate_dataframes.py`: Dataset preparation
-- `test_api.py`: API testing utilities
+### Command Line Arguments
 
-## Experiment Results
-
-Results are stored in the experiment directory specified by `--exp-path`:
-- `config.json`: Experiment configuration and metadata
-- `results.parquet`: Detailed results including predictions and accuracies
+- `--df-path`: Path to MMLU dataset parquet file
+- `--num-samples`: Number of subsampled questions to use from original dataframe
+- `--api`: Which model API to use (`claude` or `deepseek`)
+- `--output-dir`: Where to save the results from LLM generated questions
 
 ## Contributing
 
-Feel free to open issues or submit pull requests with improvements. Some areas for potential enhancement:
-- Additional LLM API support
-- New prompt formatting strategies
-- Extended results analysis
-- Batch processing capabilities
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## Acknowledgments
+
+- MMLU Benchmark Creators
+- BlueDot Impact for API compute credits
+- Anthropic and Deepseek for API access
+
+## Acknowledgments
+
+MIT License
+
+Copyright (c) 2024 Galvin Khara
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

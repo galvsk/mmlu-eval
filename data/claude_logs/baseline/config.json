@@ -1,0 +1,12 @@
+{
+  "description": "Baseline test run",
+  "model": {
+    "type": "claude",
+    "model": "claude-3-5-sonnet-20241022"
+  },
+  "save_frequency": 10,
+  "df_path": "/Users/galvk/Desktop/mmlu-eval/data/ref_dataframes/mmlu_test.parquet",
+  "data_hash": "0242d87435715af1ae9ef2567f9e0711",
+  "created_at": "2025-01-16 19:06:12",
+  "last_updated": "2025-01-16 19:06:35"
+}
