@@ -77,10 +77,10 @@ def plot_subject_performance(results, model_name, figsize=(12, 8)):
 
 # %% Save plots for each model
 fig, ax = plot_subject_performance(claude_results, 'Claude 3.5 Sonnet')
-fig.savefig('claude_by_subject.png', dpi=300, bbox_inches='tight')
+fig.savefig('figures/claude_by_subject.png', dpi=300, bbox_inches='tight')
 plt.show()
 
 # %%
 fig, ax = plot_subject_performance(deepseek_results, 'DeepSeek-v3')
-fig.savefig('deepseek_by_subject.png', dpi=300, bbox_inches='tight')
+fig.savefig('figures/deepseek_by_subject.png', dpi=300, bbox_inches='tight')
 plt.show()

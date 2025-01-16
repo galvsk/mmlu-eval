@@ -113,12 +113,12 @@ def plot_answer_distributions(claude_df, deepseek_df, fold='test', figsize=(12, 
 
 # %% Save plots for each model
 fig, ax = plot_answer_distributions(claude, deepseek, fold='test')
-fig.savefig('baseline_test_distribution.png', dpi=300, bbox_inches='tight')
+fig.savefig('figures/baseline_test_distribution.png', dpi=300, bbox_inches='tight')
 plt.show()
 
 # %%
 fig, ax = plot_answer_distributions(claude, deepseek, fold='train')
-fig.savefig('baseline_train_distribution.png', dpi=300, bbox_inches='tight')
+fig.savefig('figures/baseline_train_distribution.png', dpi=300, bbox_inches='tight')
 plt.show()
 
 # %% Get bootstrap performances with 95% CIs for each model
@@ -186,4 +186,4 @@ def plot_bootstrap_results(claude_results, deepseek_results, figsize=(10, 6)):
 
 # %%
 fig, ax = plot_bootstrap_results(claude_acc, deepseek_acc)
-fig.savefig('baseline_bootstrap_results.png', dpi=300, bbox_inches='tight')
+fig.savefig('figures/baseline_bootstrap_results.png', dpi=300, bbox_inches='tight')
