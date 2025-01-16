@@ -63,6 +63,25 @@ def bootstrap_by_subject(df, n_bootstraps=10_000, random_state=666):
     
     return final_results
 
+def bootstrap_test(df, n_bootstraps=10_000, random_state=666):
+    """
+    Bootstrap accuracy with 95% CIs for test set.
+    """
+    np.random.seed(random_state)
+    results = [] 
+    for _ in range(n_bootstraps):
+        # Sample both train and test in same loop iteration
+        sample = df.sample(n=len(df), replace=True)
+        acc = (sample['predicted'] == sample['answer']).mean() * 100.
+        results.append(acc)
+    
+    return {
+        'mean': np.mean(results),
+        'ci_lower': np.percentile(results, 2.5),
+        'ci_upper': np.percentile(results, 97.5)
+    }
+
+
 # Define coarser grained subject mapping to more easily sub-stratify model performance
 MMLU_CATEGORY_MAP = {
     # STEM
