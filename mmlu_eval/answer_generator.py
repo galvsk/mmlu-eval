@@ -134,19 +134,6 @@ class DatasetGenerator:
 
         # Save final dataset and config
         df.to_parquet(output_file, index=False)
-
-
-        config = {
-            'original_dataset': str(self.df_path),
-            'num_samples': self.config.num_samples,
-            'seed': self.seed,
-            'model': self.api_str,
-            'difficulty_requirement': self.config.difficulty_requirement,
-            'total_questions_generated': (~df['generated_wrong_answers'].isna()).sum()
-        }
-        with open(config_file, 'w') as f:
-            json.dump(config, f, indent=2)
-
         completed = (~df['generated_wrong_answers'].isna()).sum()
         print(f"\nGeneration complete!")
         print(f"- Generated answers for {completed}/{len(df)} questions")
