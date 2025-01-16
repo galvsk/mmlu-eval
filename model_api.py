@@ -32,12 +32,12 @@ class ClaudeAPI(ModelAPI):
     def get_completion(self, prompt: str) -> Dict[str, Any]:
         response = self.client.messages.create(
             model=self.config.model,
-            max_tokens=5,
+            max_tokens=1000,
             temperature=0,
             messages=[{"role": "user", "content": prompt}]
         )
         return {
-            'prediction': response.content[0].text[0],
+            'prediction': response.content[0].text,
         }
 
 class DeepseekAPI(ModelAPI):
@@ -56,7 +56,7 @@ class DeepseekAPI(ModelAPI):
                     {"role": "system", "content": self.config.system_prompt},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=100,
+                max_tokens=1000,
                 temperature=0
             )
             return {
