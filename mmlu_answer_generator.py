@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import random
 from typing import List, Dict
@@ -5,11 +6,12 @@ from dataclasses import dataclass
 import json
 from pathlib import Path
 from model_api import ModelAPI, ClaudeAPI, DeepseekAPI, ClaudeConfig, DeepseekConfig
+from analysis.utils import MMLU_CATEGORY_MAP
 
 @dataclass
 class AlternativeAnswerConfig:
     """Configuration for generating alternative answers"""
-    num_samples: int = 1000
+    num_samples: int = 1200
     difficulty_requirement: str = "significantly difficult but still clearly incorrect"
     system_context: str = """You are an expert test question writer. 
     Your task is to generate alternative wrong answers that are challenging and plausible."""
@@ -35,12 +37,18 @@ class DatasetGenerator:
         self.config = config
         self.output_path = Path(output_path)
         self.df = pd.read_parquet(df_path)
+        # Remap subjects to coarser grained values
+        assert len(np.unique(self.df.subject)) == len(MMLU_CATEGORY_MAP)
+        self.df['subject'] = self.df['subject'].map(MMLU_CATEGORY_MAP)
+        # Only consider subset
+        self.df = self.df[self.df.subject.isin(['STEM', 'Law & Ethics', 'Social Sciences'])]
+
         
         # Get model identifier for filenames
         if hasattr(api, 'config'):
             self.model_id = f"{api.config.model}"
         else:
-            self.model_id = "unknown_model"
+            raise ValueError(f"Unsupported API type: {api}")
         
     def sample_questions(self, seed: int = 666) -> pd.DataFrame:
         """Create a stratified sample of questions.
