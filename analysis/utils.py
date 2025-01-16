@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import seaborn as sns
+import matplotlib.pylab as plt
 
 
 def bootstrap_train_vs_test_performance(df, n_bootstraps=10_000, random_state=666):
@@ -157,3 +159,70 @@ MMLU_CATEGORY_MAP = {
     # Other
     'miscellaneous': 'Other'
 }
+
+def analyse_prompt_sensitivity_by_subject(baseline_df: pd.DataFrame, 
+                                          modified_df: pd.DataFrame, 
+                                          n_bootstraps: int = 10_000,
+                                          random_state: int = 666) -> dict:
+    """
+    Compare performance between two formats for all subjects.
+    
+    Args:
+        baseline_df: Baseline DataFrame with columns ['answer', 'predicted', 'subject']
+        modified_df: Translated DataFrame with columns ['answer', 'predicted', 'subject']
+        n_bootstraps: Number of bootstrap iterations
+        random_state: Random seed for reproducibility
+    
+    Returns:
+        Dictionary with results for all subjects
+    """
+    np.random.seed(random_state)
+    
+    # Get subjects sorted by frequency
+    subject_counts = baseline_df['subject'].value_counts()
+    subjects = subject_counts.index.tolist()
+    
+    results = {}
+    
+    for subject in subjects:
+        # Get subject-specific data
+        base_subject = baseline_df[baseline_df['subject'] == subject]
+        mod_subject = modified_df[modified_df['subject'] == subject]
+        
+        # Bootstrap both conditions
+        base_scores = []
+        mod_scores = []
+        for _ in range(n_bootstraps):
+            # Sample with replacement
+            base_sample = base_subject.sample(n=len(base_subject), replace=True)
+            mod_sample = mod_subject.sample(n=len(mod_subject), replace=True)
+            
+            # Calculate accuracies
+            base_acc = (base_sample['predicted'] == base_sample['answer']).mean() * 100
+            mod_acc = (mod_sample['predicted'] == mod_sample['answer']).mean() * 100
+            
+            base_scores.append(base_acc)
+            mod_scores.append(mod_acc)
+        
+        # Calculate statistics
+        base_scores = np.array(base_scores)
+        mod_scores = np.array(mod_scores)
+        
+        base_mean = np.mean(base_scores)
+        mod_mean = np.mean(mod_scores)
+        base_ci = np.percentile(base_scores, [2.5, 97.5])
+        mod_ci = np.percentile(mod_scores, [2.5, 97.5])
+        
+        # Check if change is significant
+        is_significant = base_ci[1] < mod_ci[0] or mod_ci[1] < base_ci[0]
+        
+        results[subject] = {
+            'n_samples': len(base_subject),
+            'means': [base_mean, mod_mean],
+            'lower_cis': [base_ci[0], mod_ci[0]],
+            'upper_cis': [base_ci[1], mod_ci[1]],
+            'delta': mod_mean - base_mean,
+            'is_significant': is_significant
+        }
+    
+    return results
