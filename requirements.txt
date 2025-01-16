@@ -3,3 +3,4 @@ pandas
 pyarrow
 anthropic
 openai
+seaborn
