@@ -12,7 +12,7 @@ from mmlu_eval.paths import (
 
 
 class MMLUData:
-    def __init__(self, data_dir: str = '.'):
+    def __init__(self, data_dir: str = RAW_MMLU_DIR):
         self.data_dir = Path(data_dir)
         self.data = pd.DataFrame({})
         
@@ -67,26 +67,23 @@ class MMLUData:
         
         return question
     
-    def save_formatted(self, save_path: str = 'ref_dataframes') -> None:
+    def save_formatted(self, save_path: str = REF_DATA_DIR) -> None:
         if self.data.empty:
             print("No data loaded. Run gather_and_format() first.")
             return
         
         os.makedirs(save_path, exist_ok=True)
         # Split the dataset up and save separately
-        trn_df.to_parquet(REF_DATA_DIR / MMLU_TRAIN_FILE)
-        test_df.to_parquet(REF_DATA_DIR / MMLU_TEST_FILE)
-        print(f"Saved train data to: {REF_DATA_DIR / MMLU_TRAIN_FILE}")
-        print(f"Saved test data to: {REF_DATA_DIR / MMLU_TEST_FILE}")    
+        trn_df.to_parquet(MMLU_TRAIN_FILE)
+        test_df.to_parquet(MMLU_TEST_FILE)
+        print(f"Saved train data to: {MMLU_TRAIN_FILE}")
+        print(f"Saved test data to: {MMLU_TEST_FILE}")    
 
 if __name__ == "__main__":
-    mmlu = MMLUData(RAW_MMLU_DIR)
+    mmlu = MMLUData()
     print(f"\nLoading raw MMLU data from {RAW_MMLU_DIR}...")
     mmlu.gather_and_format()
     mmlu.summarize()
     question = mmlu.sample_question()
     print("\nSaving formatted dataframes...")
-    mmlu.save_formatted(REF_DATA_DIR)
-    print("\nData processing complete! Files saved to:")
-    print(f"- {REF_DATA_DIR / MMLU_TRAIN_FILE}")
-    print(f"- {REF_DATA_DIR / MMLU_TEST_FILE}")
+    mmlu.save_formatted()

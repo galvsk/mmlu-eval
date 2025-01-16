@@ -84,7 +84,7 @@ This two-step process:
 - Downloads the raw MMLU dataset using the provided shell script
 - Processes the raw data and generates reference dataframes for evaluation
 
-### 2. Running Experiments
+### 2. Running MMLU evaluation experiments
 
 ```bash
 python scripts/run_mmlu_eval.py \
@@ -94,6 +94,7 @@ python scripts/run_mmlu_eval.py \
     --api claude \
     --prompt-style default
 ```
+
 ### Command Line Arguments
 
 - `--exp-path`: Directory to store experiment results
@@ -109,20 +110,12 @@ python scripts/run_mmlu_eval.py \
   - `randomcase`: Random case variations
   - `duplicatewrong`: Duplicates incorrect choices
 
-### 3. Generating Alternative Incorrect Answers
+### 3. Generating new answer choices from LLM APIs
 
 The alternative answer generation is designed to systematically create challenging yet incorrect responses from language models. This helps in:
 - Analyzing model vulnerability to plausible but incorrect options
 - Understanding how different language models generate incorrect answers
 - Probing the reasoning capabilities of AI models
-
-```bash
-python scripts/run_answer_generator.py \
-    --df-path ref_dataframes/mmlu_test.parquet \
-    --output-dir alternative_datasets \
-    --num-samples 1000 \
-    --api claude
-```
 
 Key features of alternative answer generation:
 - Generates multiple incorrect answers for each question
@@ -130,28 +123,26 @@ Key features of alternative answer generation:
 - Supports generation from different model APIs (Claude, Deepseek)
 - Creates datasets for further analysis of model performance
 
+
+```bash
+python scripts/run_answer_generator.py \
+    --df-path ref_dataframes/mmlu_test.parquet \
+    --api claude
+    --seed 123
+```
+
 ### Command Line Arguments
 
 - `--df-path`: Path to MMLU dataset parquet file
-- `--num-samples`: Number of subsampled questions to use from original dataframe
 - `--api`: Which model API to use (`claude` or `deepseek`)
-- `--output-dir`: Where to save the results from LLM generated questions
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+- `--seed`: Random seed to ensure reproducibility of randomly subsampled dataframe
 
 ## Acknowledgments
 
 - MMLU Benchmark Creators
 - BlueDot Impact for API compute credits
+- Claude 3.5 Sonnet for help in developing codebase
 - Anthropic and Deepseek for API access
-
-## Acknowledgments
 
 MIT License
 

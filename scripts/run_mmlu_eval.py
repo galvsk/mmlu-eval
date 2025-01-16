@@ -9,7 +9,6 @@ from mmlu_eval.formatter import (
     MMLUPromptDuplicateWrong
 )
 from mmlu_eval.paths import (
-    get_ref_data_path,
     get_experiment_path,
     MMLU_TEST_FILE,
 )
@@ -34,14 +33,14 @@ def parse_args():
         '--experiment',
         type=str,
         required=True,
-        help='Name of experiment directory to create in logs'
+        help='Name of experiment in relevant log dir'
     )
 
     parser.add_argument(
-        '--test-data',
+        '--df-path',
         type=str,
         default=MMLU_TEST_FILE,
-        help='Name of test data file in ref_dataframes'
+        help='Path to eval dataframe'
     )
 
     parser.add_argument(
@@ -69,7 +68,7 @@ def parse_args():
     parser.add_argument(
         '--save-frequency',
         type=int,
-        default=10,
+        default=100,
         help='How often to save results (in number of questions)'
     )
 
@@ -98,7 +97,7 @@ def main():
     # Initialize experimenter
     experimenter = MMLUExperimenter(
         experiment_path=get_experiment_path(args.experiment, args.api),
-        df_path=get_ref_data_path(args.test_data),
+        df_path=args.df_path,
         api=args.api,
         description=args.desc,
         save_frequency=args.save_frequency,
