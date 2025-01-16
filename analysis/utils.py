@@ -1,4 +1,69 @@
+import numpy as np
+import pandas as pd
 
+
+def bootstrap_train_vs_test_performance(df, n_bootstraps=10_000, random_state=666):
+    """
+    Bootstrap accuracy with 95% CIs for train and test sets.
+    """
+    np.random.seed(random_state)
+    train_results, test_results = [], []
+    
+    train_df = df[df['fold'] == 'train']
+    test_df = df[df['fold'] == 'test']
+    
+    for _ in range(n_bootstraps):
+        # Sample both train and test in same loop iteration
+        train_sample = train_df.sample(n=len(train_df), replace=True)
+        test_sample = test_df.sample(n=len(test_df), replace=True)
+        
+        train_acc = (train_sample['predicted'] == train_sample['answer']).mean() * 100.
+        test_acc = (test_sample['predicted'] == test_sample['answer']).mean() * 100.
+        
+        train_results.append(train_acc)
+        test_results.append(test_acc)
+    
+    return {
+        'train': {
+            'mean': np.mean(train_results),
+            'ci_lower': np.percentile(train_results, 2.5),
+            'ci_upper': np.percentile(train_results, 97.5)
+        },
+        'test': {
+            'mean': np.mean(test_results),
+            'ci_lower': np.percentile(test_results, 2.5),
+            'ci_upper': np.percentile(test_results, 97.5)
+        }
+    }
+    
+def bootstrap_by_subject(df, n_bootstraps=10_000, random_state=666):
+    """
+    Bootstrap accuracy with 95% CIs for each subject in the test set.
+    """
+    np.random.seed(random_state)
+    subjects = df['subject'].unique()
+    results = {subject: [] for subject in subjects}
+    
+    for _ in range(n_bootstraps):
+        for subject in subjects:
+            subject_df = df[df['subject'] == subject]
+            sample = subject_df.sample(n=len(subject_df), replace=True)
+            acc = (sample['predicted'] == sample['answer']).mean() * 100.
+            results[subject].append(acc)
+    
+    final_results = {}
+    for subject in subjects:
+        scores = np.array(results[subject])
+        final_results[subject] = {
+            'mean': np.mean(scores),
+            'ci_lower': np.percentile(scores, 2.5),
+            'ci_upper': np.percentile(scores, 97.5),
+            'n_samples': len(df[df['subject'] == subject])
+        }
+    
+    return final_results
+
+# Define coarser grained subject mapping to more easily sub-stratify model performance
 MMLU_CATEGORY_MAP = {
     # STEM
     'elementary_mathematics': 'STEM',
