@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Literal
 import random
 
 
@@ -144,18 +144,18 @@ class MMLUPromptDuplicateWrong(MMLUPromptDefault):
 
 @dataclass
 class MMLUPromptAlternative(MMLUPromptPermuted):
-    eval_mode: Literal['generated_only', 'all_answers']
+    eval_mode: Literal['generated_only', 'all_answers'] = 'generated_only'
 
     def format_question(self) -> Tuple[str, int, Dict[int, int]]:
         # Select letters and instructions based on mode
-        if self.eval_mode == 'generated_only':
+        if len(self.choices) == 4:
             letters = ['A', 'B', 'C', 'D']
             instructions = "Please respond with ONLY the letter (A-D) corresponding to what you believe is the correct answer."
-        elif self.eval_mode = 'all_answers':
+        elif len(self.choices) == 7:
             letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
             instructions = "Please respond with ONLY the letter (A-G) corresponding to what you believe is the correct answer."
         else:
-            raise NotImplementedError(f"Evaluation mode '{self.eval_mode}' not implemented.")
+            raise ValueError(f"Code only supports 4 or 7 possible answer choices.")
 
         # Use parent's permutation logic
         permuted_choices, new_answer, position_mapping = self.permute_choices()

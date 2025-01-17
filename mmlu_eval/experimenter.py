@@ -1,7 +1,7 @@
 import os
 import re
+import numpy as np
 import pandas as pd
-import anthropic
 import json
 import time
 from typing import List, Optional, Dict, Literal
@@ -292,11 +292,14 @@ class AlternativeExperimenter(MMLUExperimenter):
                       or all answers ('all_answers')
             *args, **kwargs: Arguments passed to parent MMLUExperimenter
         """
-        super().__init__(*args, prompt_style=MMLUPromptAlternative, **kwargs)
         self.eval_mode = eval_mode
+        super().__init__(*args, prompt_style=MMLUPromptAlternative, **kwargs)
 
     def _load_and_validate_data(self) -> pd.DataFrame:
         """Load alternative dataset and convert to standard MMLU format."""
+        if not self.df_path.exists():
+            raise FileNotFoundError(f"Dataframe not found: {self.df_path}")
+
         df = pd.read_parquet(self.df_path)
 
         # Validate required columns
@@ -307,10 +310,10 @@ class AlternativeExperimenter(MMLUExperimenter):
             raise ValueError(f"Missing required columns: {missing_cols}")
 
         # Validate data types
-        if not isinstance(df['generated_wrong_answers'].iloc[0], list):
-            raise ValueError("generated_wrong_answers should be a list")
-        if not isinstance(df['original_wrong_answers'].iloc[0], list):
-            raise ValueError("original_wrong_answers should be a list")
+        if not isinstance(df['generated_wrong_answers'].iloc[0], np.ndarray):
+            raise ValueError("generated_wrong_answers should be a numpy array")
+        if not isinstance(df['original_wrong_answers'].iloc[0], np.ndarray):
+            raise ValueError("original_wrong_answers should be a numpy array")
 
         # Convert to standard MMLU format
         formatted_df = pd.DataFrame()
@@ -319,15 +322,15 @@ class AlternativeExperimenter(MMLUExperimenter):
         # Combine answers based on eval_mode
         if self.eval_mode == 'generated_only':
             formatted_df['choices'] = df.apply(
-                lambda row: [row['correct_answer']] + row['generated_wrong_answers'],
+                lambda row: [row['correct_answer']] + row['generated_wrong_answers'].tolist(),
                 axis=1
             )
         else:  # all_answers
             formatted_df['choices'] = df.apply(
                 lambda row: (
                     [row['correct_answer']] +
-                    row['original_wrong_answers'] +
-                    row['generated_wrong_answers']
+                    row['original_wrong_answers'].tolist() +
+                    row['generated_wrong_answers'].tolist()
                 ),
                 axis=1
             )
@@ -341,14 +344,15 @@ class AlternativeExperimenter(MMLUExperimenter):
 
         return formatted_df
 
-    def _format_prompt(self, row: pd.Series) -> tuple[str, int, Dict[int, int]]:
-        """Format the question using our alternative formatter."""
+    def _format_prompt(self, question: str, choices: List[str], answer: int) -> tuple[str, int, Dict[int, int]]:
+        """Format the question and choices into a prompt for Claude.
+        Returns:
+            tuple: (formatted_prompt, answer_index, position_mapping)
+        """
         formatter = MMLUPromptAlternative(
-            question=row['question'],
-            choices=row['choices'],
-            answer=row['answer'],
-            subject=row.get('subject'),
-            eval_mode=self.eval_mode
+            question=question,
+            choices=choices,
+            answer=answer
         )
         return formatter.format_question()
 

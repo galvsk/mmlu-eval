@@ -1,8 +1,7 @@
 import argparse
 from textwrap import dedent
 from mmlu_eval.paths import get_experiment_path, MMLU_TEST_FILE
-from mmlu_eval.experimenter import MMLUExperimenter
-from mmlu_eval.alternative_experimenter import AlternativeExperimenter
+from mmlu_eval.experimenter import MMLUExperimenter, AlternativeExperimenter
 from mmlu_eval.formatter import (
     MMLUPromptDefault, 
     MMLUPromptPermuted, 
