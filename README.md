@@ -108,7 +108,7 @@ python scripts/run_mmlu_eval.py \
   - `permuted`: Randomly shuffled choices
   - `uppercase`: All uppercase text
   - `randomcase`: Random case variations
-  - `duplicatewrong`: Duplicates incorrect choices
+  - `duplicatewrong`: Duplicates incorrect choices (note : this permute's choices also)
 
 ### 3. Generating new answer choices from LLM APIs
 
