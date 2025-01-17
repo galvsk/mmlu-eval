@@ -142,6 +142,38 @@ class MMLUPromptDuplicateWrong(MMLUPromptDefault):
         new_answer = expanded_choices.index(self.choices[self.answer])
         return formatted_question, new_answer, position_mapping
 
+@dataclass
+class MMLUPromptAlternative(MMLUPromptPermuted):
+    eval_mode: Literal['generated_only', 'all_answers']
+
+    def format_question(self) -> Tuple[str, int, Dict[int, int]]:
+        # Select letters and instructions based on mode
+        if self.eval_mode == 'generated_only':
+            letters = ['A', 'B', 'C', 'D']
+            instructions = "Please respond with ONLY the letter (A-D) corresponding to what you believe is the correct answer."
+        elif self.eval_mode = 'all_answers':
+            letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+            instructions = "Please respond with ONLY the letter (A-G) corresponding to what you believe is the correct answer."
+        else:
+            raise NotImplementedError(f"Evaluation mode '{self.eval_mode}' not implemented.")
+
+        # Use parent's permutation logic
+        permuted_choices, new_answer, position_mapping = self.permute_choices()
+        
+        # Format with our letters and instructions
+        choices = "\n".join(
+            f"{letter}) {c}" for letter, c in zip(letters, permuted_choices)
+        )
+        
+        formatted_question = (
+            f"Question: {self.question}\n\n"
+            f"Options:\n{choices}\n\n"
+            f"{instructions}"
+        )
+        
+        return formatted_question, new_answer, position_mapping
+
+
 
 if __name__ == "__main__":
     test_question = "What is the capital of France?"

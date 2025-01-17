@@ -7,7 +7,7 @@ import time
 from typing import List, Optional, Dict, Literal
 from pathlib import Path
 import hashlib
-from mmlu_eval.formatter import MMLUPromptDefault
+from mmlu_eval.formatter import MMLUPromptDefault, MMLUPromptAlternative
 from mmlu_eval.model_api import ClaudeAPI, DeepseekAPI, ClaudeConfig, DeepseekConfig, ModelAPI
 
 
@@ -274,3 +274,86 @@ class MMLUExperimenter:
             'accuracy': self.get_accuracy(),
         }
         return results
+
+class AlternativeExperimenter(MMLUExperimenter):
+    """Experimenter for evaluating models on alternative answer sets."""
+
+    def __init__(
+        self,
+        *args,
+        eval_mode: Literal['generated_only', 'all_answers'] = 'generated_only',
+        **kwargs
+    ):
+        """
+        Initialize experimenter with specified evaluation mode.
+
+        Args:
+            eval_mode: Whether to evaluate on just generated answers ('generated_only')
+                      or all answers ('all_answers')
+            *args, **kwargs: Arguments passed to parent MMLUExperimenter
+        """
+        super().__init__(*args, prompt_style=MMLUPromptAlternative, **kwargs)
+        self.eval_mode = eval_mode
+
+    def _load_and_validate_data(self) -> pd.DataFrame:
+        """Load alternative dataset and convert to standard MMLU format."""
+        df = pd.read_parquet(self.df_path)
+
+        # Validate required columns
+        required_cols = ['question', 'correct_answer', 'original_wrong_answers',
+                        'generated_wrong_answers']
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        if missing_cols:
+            raise ValueError(f"Missing required columns: {missing_cols}")
+
+        # Validate data types
+        if not isinstance(df['generated_wrong_answers'].iloc[0], list):
+            raise ValueError("generated_wrong_answers should be a list")
+        if not isinstance(df['original_wrong_answers'].iloc[0], list):
+            raise ValueError("original_wrong_answers should be a list")
+
+        # Convert to standard MMLU format
+        formatted_df = pd.DataFrame()
+        formatted_df['question'] = df['question']
+
+        # Combine answers based on eval_mode
+        if self.eval_mode == 'generated_only':
+            formatted_df['choices'] = df.apply(
+                lambda row: [row['correct_answer']] + row['generated_wrong_answers'],
+                axis=1
+            )
+        else:  # all_answers
+            formatted_df['choices'] = df.apply(
+                lambda row: (
+                    [row['correct_answer']] +
+                    row['original_wrong_answers'] +
+                    row['generated_wrong_answers']
+                ),
+                axis=1
+            )
+
+        # Correct answer is first in choices list
+        formatted_df['answer'] = 0
+
+        # Keep subject if present
+        if 'subject' in df.columns:
+            formatted_df['subject'] = df['subject']
+
+        return formatted_df
+
+    def _format_prompt(self, row: pd.Series) -> tuple[str, int, Dict[int, int]]:
+        """Format the question using our alternative formatter."""
+        formatter = MMLUPromptAlternative(
+            question=row['question'],
+            choices=row['choices'],
+            answer=row['answer'],
+            subject=row.get('subject'),
+            eval_mode=self.eval_mode
+        )
+        return formatter.format_question()
+
+    def get_results_summary(self) -> dict:
+        """Add evaluation mode to results summary."""
+        summary = super().get_results_summary()
+        summary['eval_mode'] = self.eval_mode
+        return summary
