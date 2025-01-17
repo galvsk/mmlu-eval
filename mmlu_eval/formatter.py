@@ -112,8 +112,8 @@ class MMLUPromptDuplicateWrong(MMLUPromptDefault):
         expanded_choices.pop(self.answer + len(self.choices))
         
         # Shuffle the expanded choices
-        #random.seed(666)  # For reproducible tests
-        #random.shuffle(expanded_choices)
+        random.seed(666)  # For reproducible tests
+        random.shuffle(expanded_choices)
         
         # Create position mapping to track where the original correct answer went
         position_mapping = {}
