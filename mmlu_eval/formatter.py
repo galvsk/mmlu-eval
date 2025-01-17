@@ -64,6 +64,7 @@ class MMLUPromptPermuted(MMLUPromptDefault):
         available_positions.remove(self.answer)  # Remove current answer position
         
         # Pick new position for answer
+        random.seed(666)  # For reproducible tests
         new_answer_position = random.choice(available_positions)
         
         # Create shuffled list of remaining original positions
