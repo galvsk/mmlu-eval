@@ -143,7 +143,7 @@ Common Arguments:
 Standard MMLU Arguments:
 - `--prompt-style`: Formatting style (`default`, `permuted`, `uppercase`, `randomcase`, `duplicatewrong`)
 
-Alternative Evaluation Arguments:
+MMLU + LLM Generated Answer Arguments:
 - `--alternative-mode`: Evaluation mode (`generated_only` or `all_answers`)
   - `generated_only`: Uses one correct + three generated wrong answers
   - `all_answers`: Uses one correct + three original + three generated wrong answers
