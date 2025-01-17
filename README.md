@@ -6,26 +6,34 @@ This project provides a comprehensive framework for evaluating language models o
 
 - Multiple model APIs (currently Claude and Deepseek)
 - Flexible prompt formatting strategies
+- LLM-generated alternative answers
 - Detailed performance analysis
-- LLM generated incorrect answers
 
 ## Features
 
-- Multiple prompt formatting styles:
-  - Default formatting : standard prompt (see `mmlu_eval/formatter.py`)
-  - Permuted choice order : randomly swap order of the answers
-  - Uppercase formatting : change all alphabetical characters to uppercase
-  - Random case formatting : randomly alternative between uppercase and lowercase alphabetical characters
-  - Duplicate wrong answers : repeat all incorrect answers and permute order (six wrong, one right)
+### Evaluation Modes
 
+1. Standard MMLU Evaluation
+   - Default formatting: standard four-choice prompts
+   - Permuted choice order: randomly swap order of answers
+   - Uppercase formatting: convert all text to uppercase
+   - Random case formatting: randomly alternate between upper and lowercase
+   - Duplicate wrong answers: six wrong answers, one right (with permutation)
+
+2. Alternative Answer Evaluation
+   - Evaluate models using LLM-generated incorrect answers
+   - Two modes:
+     - `generated_only`: One correct + three generated wrong answers
+     - `all_answers`: One correct + three original + three generated wrong answers
+   - Automatic answer permutation for each question
+
+### Framework Features
 - Robust experiment tracking
   - Checkpointing
   - Progress saving
   - Detailed result logging
-
-- Alternative answer generation
-  - Generate challenging incorrect answers
-  - Support for different difficulty levels
+- Support for multiple model APIs
+- Configurable evaluation parameters
 
 ## Prerequisites
 
@@ -35,23 +43,20 @@ This project provides a comprehensive framework for evaluating language models o
 
 ### API Key Management
 
-The project uses Mac's system keychain to securely store API keys. 
+The project uses Mac's system keychain to securely store API keys.
 
 1. Set up API keys in the Keychain:
-   - For Claude API key:
-     ```bash
-     security add-generic-password -a "your_email@example.com" -s "claude-api-key" -w "YOUR_CLAUDE_API_KEY"
-     ```
-   - For Deepseek API key:
-     ```bash
-     security add-generic-password -a "your_email@example.com" -s "deepseek-api-key" -w "YOUR_DEEPSEEK_API_KEY"
-     ```
+   ```bash
+   # For Claude API key
+   security add-generic-password -a "your_email@example.com" -s "claude-api-key" -w "YOUR_CLAUDE_API_KEY"
+   
+   # For Deepseek API key
+   security add-generic-password -a "your_email@example.com" -s "deepseek-api-key" -w "YOUR_DEEPSEEK_API_KEY"
+   ```
 
-2. Key retrieval is handled by `mmlu_eval/utils.py`:
-   - The `get_api_key()` function automatically retrieves keys from the system keychain
-   - Supports both Claude and Deepseek API key management
+2. Key retrieval is handled automatically by the framework
 
-Note: Replace `your_email@example.com` with the email associated with your API keys, and use your actual API keys.
+Note: Replace `your_email@example.com` with your API-associated email.
 
 ### Installation
 
@@ -66,9 +71,9 @@ cd mmlu-eval
 pip install -e .
 ```
 
-## Quick Start
+## Usage Guide
 
-### 1. Preparing Data
+### 1. Data Preparation
 
 1. Download MMLU dataset
 ```bash
@@ -80,62 +85,56 @@ sh download_mmlu.sh
 python scripts/generate_dataframes.py
 ```
 
-This two-step process:
-- Downloads the raw MMLU dataset using the provided shell script
-- Processes the raw data and generates reference dataframes for evaluation
-
-### 2. Running MMLU evaluation experiments
-
-```bash
-python scripts/run_mmlu_eval.py \
-    --experiment baseline \
-    --desc "Baseline test run" \
-    --max-questions 100 \
-    --api claude \
-    --prompt-style default
-```
-
-### Command Line Arguments
-
-- `--exp-path`: Directory to store experiment results
-- `--df-path`: Path to MMLU dataset parquet file
-- `--desc`: Description of the experiment (required for new experiments)
-- `--max-questions`: Maximum number of questions to process
-- `--api`: Which model API to use (`claude` or `deepseek`)
-- `--save-frequency`: How often to save results (default: 10 questions)
-- `--prompt-style`: Prompt formatting style to use:
-  - `default`: Standard format
-  - `permuted`: Randomly shuffled choices
-  - `uppercase`: All uppercase text
-  - `randomcase`: Random case variations
-  - `duplicatewrong`: Duplicates incorrect choices (note : this permute's choices also)
-
-### 3. Generating new answer choices from LLM APIs
-
-The alternative answer generation is designed to systematically create challenging yet incorrect responses from language models. This helps in:
-- Analyzing model vulnerability to plausible but incorrect options
-- Understanding how different language models generate incorrect answers
-- Probing the reasoning capabilities of AI models
-
-Key features of alternative answer generation:
-- Generates multiple incorrect answers for each question
-- Configurable difficulty of incorrect responses
-- Supports generation from different model APIs (Claude, Deepseek)
-- Creates datasets for further analysis of model performance
-
-
+3. (Optional) Generate alternative answers
 ```bash
 python scripts/run_answer_generator.py \
     --df-path ref_dataframes/mmlu_test.parquet \
     --api claude
-    --seed 123
+```
+
+### 2. Running Evaluations
+
+The framework supports both standard MMLU evaluation and alternative answer evaluation through a single interface:
+
+#### Standard MMLU Evaluation
+```bash
+python scripts/run_mmlu_eval.py \
+    --experiment baseline \
+    --desc "Standard MMLU evaluation" \
+    --max-questions 100 \
+    --api claude \
+    --prompt-style permuted
+```
+
+#### Alternative Answer Evaluation
+```bash
+python scripts/run_mmlu_eval.py \
+    --experiment alt_answers \
+    --desc "Testing with generated answers" \
+    --df-path data/generated_dataframes/claude_generated_dataframe.parquet \
+    --api claude \
+    --alternative-mode generated_only  # or 'all_answers'
 ```
 
 ### Command Line Arguments
 
-- `--df-path`: Path to MMLU dataset parquet file
+Common Arguments:
+- `--experiment`: Name of experiment (required)
+- `--desc`: Description of the experiment (required)
+- `--df-path`: Path to dataset parquet file
+- `--max-questions`: Maximum number of questions to process
 - `--api`: Which model API to use (`claude` or `deepseek`)
-- `--seed`: Random seed to ensure reproducibility of randomly subsampled dataframe
+- `--save-frequency`: How often to save results (default: 100 questions)
+
+Standard MMLU Arguments:
+- `--prompt-style`: Formatting style (`default`, `permuted`, `uppercase`, `randomcase`, `duplicatewrong`)
+
+Alternative Evaluation Arguments:
+- `--alternative-mode`: Evaluation mode (`generated_only` or `all_answers`)
+  - `generated_only`: Uses one correct + three generated wrong answers
+  - `all_answers`: Uses one correct + three original + three generated wrong answers
+
+Note: When running alternative evaluation, `--prompt-style` is ignored as the formatter is determined by the evaluation mode.
 
 ## Acknowledgments
 
@@ -144,27 +143,14 @@ python scripts/run_answer_generator.py \
 - Claude 3.5 Sonnet for help in developing codebase
 - Anthropic and Deepseek for API access
 
-
 ## License
 
 MIT License
 
 Copyright (c) 2024 Galvin Khara
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
