@@ -5,11 +5,12 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pylab as plt
 from mmlu_eval.analysis import MMLU_CATEGORY_MAP, bootstrap_by_subject
+from mmlu_eval.paths import CLAUDE_LOGS_DIR, DEEPSEEK_LOGS_DIR, FIGURES_DIR
 
 # %% Load baseline test evals for each model
-claude = pd.read_parquet('../claude_logs/baseline_test/results.parquet')
+claude = pd.read_parquet(f'{CLAUDE_LOGS_DIR}/baseline_test/results.parquet')
 claude = claude[['answer', 'predicted', 'subject']]
-deepseek = pd.read_parquet('../deepseek_logs/baseline_test/results.parquet')
+deepseek = pd.read_parquet(f'{DEEPSEEK_LOGS_DIR}/baseline_test/results.parquet')
 deepseek = deepseek[['answer', 'predicted', 'subject']]
 
 # %% Ensure our coarser mapping is not excluding any original subjects
@@ -77,10 +78,10 @@ def plot_subject_performance(results, model_name, figsize=(12, 8)):
 
 # %% Save plots for each model
 fig, ax = plot_subject_performance(claude_results, 'Claude 3.5 Sonnet')
-fig.savefig('figures/claude_by_subject.png', dpi=300, bbox_inches='tight')
+fig.savefig(f'{FIGURES_DIR}/claude_by_subject.png', dpi=300, bbox_inches='tight')
 plt.show()
 
 # %%
 fig, ax = plot_subject_performance(deepseek_results, 'DeepSeek-v3')
-fig.savefig('figures/deepseek_by_subject.png', dpi=300, bbox_inches='tight')
+fig.savefig(f'{FIGURES_DIR}/deepseek_by_subject.png', dpi=300, bbox_inches='tight')
 plt.show()

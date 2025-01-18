@@ -11,6 +11,7 @@ REF_DATA_DIR = DATA_DIR / "ref_dataframes"
 ALTERNATIVE_DATA_DIR = DATA_DIR / "generated_dataframes"
 CLAUDE_LOGS_DIR = DATA_DIR / "claude_logs"
 DEEPSEEK_LOGS_DIR = DATA_DIR / "deepseek_logs"
+FIGURES_DIR = PROJECT_ROOT / "analysis" / "figures"
 
 def get_experiment_path(name: str, api: str) -> Path:
     """Get path to an experiment directory based on API type"""

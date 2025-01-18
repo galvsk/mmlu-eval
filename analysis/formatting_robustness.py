@@ -5,34 +5,28 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pylab as plt
 from mmlu_eval.analysis import MMLU_CATEGORY_MAP, bootstrap_test, analyse_prompt_sensitivity_by_subject
+from mmlu_eval.paths import CLAUDE_LOGS_DIR, DEEPSEEK_LOGS_DIR, FIGURES_DIR
 
 
 # %% Load in dataframes for each prompt format
-claude_exps = {'Baseline': '../claude_logs/baseline_test/results.parquet',
-               'Permuted': '../claude_logs/permuted_test/results.parquet',
-               'Uppercase': '../claude_logs/uppercase_test/results.parquet',
-               'Random case': '../claude_logs/randomcase_test/results.parquet',
-               'Duplicate wrongs': '../claude_logs/duplicate_permuted_wrongs_test/results.parquet'
+exps = {'Baseline': 'baseline_test/results.parquet',
+               'Permuted': 'permuted_test/results.parquet',
+               'Uppercase': 'uppercase_test/results.parquet',
+               'Random case': 'randomcase_test/results.parquet',
+               'Duplicate wrongs': 'duplicate_permuted_wrongs_test/results.parquet'
 }
 
 claude_dfs = {}
-for exp, fpath in claude_exps.items():
-    df = pd.read_parquet(fpath)
+for exp, fpath in exps.items():
+    df = pd.read_parquet(os.path.join(CLAUDE_LOGS_DIR, fpath))
     df = df[['answer', 'predicted', 'subject']]
     assert len(np.unique(df.subject)) == len(MMLU_CATEGORY_MAP)
     df['subject'] = df['subject'].map(MMLU_CATEGORY_MAP) 
     claude_dfs[exp] = df
 
-deepseek_exps = {'Baseline': '../deepseek_logs/baseline_test/results.parquet',
-                 'Permuted': '../deepseek_logs/permuted_test/results.parquet',
-                 'Uppercase': '../deepseek_logs/uppercase_test/results.parquet',
-                 'Random case': '../deepseek_logs/randomcase_test/results.parquet',
-                 'Duplicate wrongs': '../deepseek_logs/duplicate_permuted_wrongs_test/results.parquet'
-}
-
 deepseek_dfs = {}
-for exp, fpath in deepseek_exps.items():
-    df = pd.read_parquet(fpath)
+for exp, fpath in exps.items():
+    df = pd.read_parquet(os.path.join(DEEPSEEK_LOGS_DIR, fpath)
     df = df[['answer', 'predicted', 'subject']]
     assert len(np.unique(df.subject)) == len(MMLU_CATEGORY_MAP)
     df['subject'] = df['subject'].map(MMLU_CATEGORY_MAP) 
@@ -106,12 +100,12 @@ def plot_experiment_performance(results, model_name, figsize=(10, 6)):
 
 # %%
 fig, ax = plot_experiment_performance(claude_results, "Claude 3.5 Sonnet")
-fig.savefig('figures/claude_prompt_sensitivity.png', dpi=300, bbox_inches='tight')
+fig.savefig(f'{FIGURES_DIR}/claude_prompt_sensitivity.png', dpi=300, bbox_inches='tight')
 fig.show()
 
 # %%
 fig, ax = plot_experiment_performance(deepseek_results, "DeepSeek-v3")
-fig.savefig('figures/deepseek_prompt_sensitivity.png', dpi=300, bbox_inches='tight')
+fig.savefig(f'{FIGURES_DIR}/deepseek_prompt_sensitivity.png', dpi=300, bbox_inches='tight')
 fig.show()
 
 
@@ -193,7 +187,7 @@ upper_claude = analyse_prompt_sensitivity_by_subject(claude_dfs['Baseline'], cla
 
 # %%
 fig, ax = plot_subject_sensitivity_dots(upper_claude, prompt_variation='Uppercase')
-fig.savefig('figures/claude_uppercase.png', dpi=300, bbox_inches='tight')
+fig.savefig(f'{FIGURES_DIR}/claude_uppercase.png', dpi=300, bbox_inches='tight')
 fig.show()
 
 # %% Compare baseline to duplicate for Claude
@@ -201,7 +195,7 @@ dup_claude = analyse_prompt_sensitivity_by_subject(claude_dfs['Baseline'], claud
 
 # %%
 fig, ax = plot_subject_sensitivity_dots(dup_claude, prompt_variation='Duplicate Wrongs')
-fig.savefig('figures/claude_duplicate.png', dpi=300, bbox_inches='tight')
+fig.savefig(f'{FIGURES_DIR}/claude_duplicate.png', dpi=300, bbox_inches='tight')
 fig.show()
 
 # %% Compare baseline to randomcase for Deepseek
@@ -209,7 +203,5 @@ random_deepseek = analyse_prompt_sensitivity_by_subject(deepseek_dfs['Baseline']
 
 # %%
 fig, ax = plot_subject_sensitivity_dots(random_deepseek, prompt_variation='Random case')
-fig.savefig('figures/deepseek_random.png', dpi=300, bbox_inches='tight')
+fig.savefig(f'{FIGURES_DIR}/deepseek_random.png', dpi=300, bbox_inches='tight')
 fig.show()
-
-# %%

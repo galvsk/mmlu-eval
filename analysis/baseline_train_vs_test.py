@@ -5,21 +5,21 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pylab as plt
 from mmlu_eval.analysis import bootstrap_train_vs_test_performance
+from mmlu_eval.paths import CLAUDE_LOGS_DIR, DEEPSEEK_LOGS_DIR, FIGURES_DIR
 
 # Define location of baseline train and test evals for each model
-claude_paths = ['../claude_logs/baseline_train', '../claude_logs/baseline_test']
-deepseek_paths = ['../deepseek_logs/baseline_train', '../deepseek_logs/baseline_test']
+paths = ['baseline_train', 'baseline_test']
 
 # %% Load training and test dataframes for each model
 claude_dfs = []
-for path in claude_paths:
-    df = pd.read_parquet(os.path.join(path, 'results.parquet'))
+for path in paths:
+    df = pd.read_parquet(os.path.join(CLAUDE_LOGS_DIR, path, 'results.parquet'))
     df = df[['predicted', 'answer', 'fold']]
     claude_dfs.append(df)
 
 deepseek_dfs = []
-for path in deepseek_paths:
-    df = pd.read_parquet(os.path.join(path, 'results.parquet'))
+for path in paths:
+    df = pd.read_parquet(os.path.join(DEEPSEEK_LOGS_DIR, path, 'results.parquet'))
     df = df[['predicted', 'answer', 'fold']]
     deepseek_dfs.append(df)
 
@@ -113,12 +113,12 @@ def plot_answer_distributions(claude_df, deepseek_df, fold='test', figsize=(12, 
 
 # %% Save plots for each model
 fig, ax = plot_answer_distributions(claude, deepseek, fold='test')
-fig.savefig('figures/baseline_test_distribution.png', dpi=300, bbox_inches='tight')
+fig.savefig(f'{FIGURES_DIR}/baseline_test_distribution.png', dpi=300, bbox_inches='tight')
 plt.show()
 
 # %%
 fig, ax = plot_answer_distributions(claude, deepseek, fold='train')
-fig.savefig('figures/baseline_train_distribution.png', dpi=300, bbox_inches='tight')
+fig.savefig(f'{FIGURES_DIR}/baseline_train_distribution.png', dpi=300, bbox_inches='tight')
 plt.show()
 
 # %% Get bootstrap performances with 95% CIs for each model
@@ -186,4 +186,4 @@ def plot_bootstrap_results(claude_results, deepseek_results, figsize=(10, 6)):
 
 # %%
 fig, ax = plot_bootstrap_results(claude_acc, deepseek_acc)
-fig.savefig('figures/baseline_bootstrap_results.png', dpi=300, bbox_inches='tight')
+fig.savefig(f'{FIGURES_DIR}/baseline_bootstrap_results.png', dpi=300, bbox_inches='tight')
