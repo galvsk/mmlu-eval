@@ -1,0 +1,12 @@
+{
+  "description": "Claude on claude ALL answers for test",
+  "model": {
+    "type": "claude",
+    "model": "claude-3-5-sonnet-20241022"
+  },
+  "save_frequency": 100,
+  "df_path": "data/generated_dataframes/claude_generated_dataframe.parquet",
+  "data_hash": "d1739c07a157c63112222734110388c5",
+  "created_at": "2025-01-20 12:22:38",
+  "last_updated": "2025-01-20 12:58:55"
+}
