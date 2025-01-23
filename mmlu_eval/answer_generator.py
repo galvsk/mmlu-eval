@@ -15,8 +15,6 @@ class AlternativeAnswerConfig:
     """Configuration for generating alternative answers"""
     num_samples: int = 2000
     difficulty_requirement: str = "significantly difficult but still clearly incorrect"
-    system_context: str = """You are an expert test question writer.
-    Your task is to generate alternative wrong answers that are challenging and plausible."""
 
 class DatasetGenerator:
     def __init__(
@@ -79,6 +77,7 @@ class DatasetGenerator:
             'Provide exactly 3 new wrong answers, one per line, no labels or prefixes. Each answer should be relevant '
             'to the question domain and challenging but clearly incorrect to a knowledgeable person.'
         )
+        print(prompt)
 
         response = self.api.get_completion(prompt)
         alternatives = [line.strip() for line in response['prediction'].split('\n')
